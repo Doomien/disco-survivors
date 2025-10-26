@@ -113,8 +113,9 @@
     "thirteen_legged_monster": {
       "name": "13-Legged Monster",
       "sprites": [
-        "assets/characters/enemies/005_13LeggedMonster.png",
-        "assets/characters/enemies/005_13LeggedMonster2.png"
+        "assets/characters/enemies/005_13LeggedMonster1.png",
+        "assets/characters/enemies/005_13LeggedMonster2.png",
+        "assets/characters/enemies/005_13LeggedMonster3.png"
       ],
       "animation": {
         "frameTime": 15
@@ -136,6 +137,8 @@
       "name": "Electrified Sword",
       "sprites": [
         "assets/characters/enemies/006_ElectrifiedSword.png",
+        "assets/characters/enemies/006_ElectrifiedSword2.png",
+        "assets/characters/enemies/006_ElectrifiedSword3.png",
         "assets/characters/enemies/006_ElectrifiedSword2.png"
       ],
       "animation": {
