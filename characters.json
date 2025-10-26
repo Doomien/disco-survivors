@@ -1,0 +1,158 @@
+{
+  "enemies": {
+    "skeleton": {
+      "name": "Skeleton",
+      "sprites": [
+        "assets/characters/enemies/skeleton-1.png",
+        "assets/characters/enemies/skeleton-2.png"
+      ],
+      "animation": {
+        "frameTime": 12
+      },
+      "stats": {
+        "health": 3,
+        "speed": 0.4,
+        "attackStrength": 1,
+        "attackSpeed": 500,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 60,
+        "height": 66
+      },
+      "xpValue": 1
+    },
+    "danger_disc": {
+      "name": "Danger Disc",
+      "sprites": [
+        "assets/characters/enemies/001_DangerDiscb.png",
+        "assets/characters/enemies/001_DangerDisc2.png"
+      ],
+      "animation": {
+        "frameTime": 10
+      },
+      "stats": {
+        "health": 4,
+        "speed": 0.5,
+        "attackStrength": 1,
+        "attackSpeed": 450,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 60,
+        "height": 66
+      },
+      "xpValue": 2
+    },
+    "trangle": {
+      "name": "Trangle",
+      "sprites": [
+        "assets/characters/enemies/002_Trangle.png",
+        "assets/characters/enemies/002_Trangle2.png"
+      ],
+      "animation": {
+        "frameTime": 8
+      },
+      "stats": {
+        "health": 2,
+        "speed": 0.8,
+        "attackStrength": 1,
+        "attackSpeed": 400,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 60,
+        "height": 66
+      },
+      "xpValue": 2
+    },
+    "tomato": {
+      "name": "Tomato",
+      "sprites": [
+        "assets/characters/enemies/003_Tomato.png",
+        "assets/characters/enemies/003_Tomato2.png"
+      ],
+      "animation": {
+        "frameTime": 14
+      },
+      "stats": {
+        "health": 5,
+        "speed": 0.3,
+        "attackStrength": 2,
+        "attackSpeed": 600,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 60,
+        "height": 66
+      },
+      "xpValue": 3
+    },
+    "sharp_spiral": {
+      "name": "Sharp Spiral",
+      "sprites": [
+        "assets/characters/enemies/004_TheSharpSpiral.png",
+        "assets/characters/enemies/004_TheSharpSpiral2.png"
+      ],
+      "animation": {
+        "frameTime": 12
+      },
+      "stats": {
+        "health": 6,
+        "speed": 0.6,
+        "attackStrength": 2,
+        "attackSpeed": 500,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 60,
+        "height": 66
+      },
+      "xpValue": 3
+    },
+    "thirteen_legged_monster": {
+      "name": "13-Legged Monster",
+      "sprites": [
+        "assets/characters/enemies/005_13LeggedMonster.png",
+        "assets/characters/enemies/005_13LeggedMonster2.png"
+      ],
+      "animation": {
+        "frameTime": 15
+      },
+      "stats": {
+        "health": 8,
+        "speed": 0.35,
+        "attackStrength": 3,
+        "attackSpeed": 700,
+        "attackRange": 50
+      },
+      "size": {
+        "width": 70,
+        "height": 70
+      },
+      "xpValue": 4
+    },
+    "electrified_sword": {
+      "name": "Electrified Sword",
+      "sprites": [
+        "assets/characters/enemies/006_ElectrifiedSword.png",
+        "assets/characters/enemies/006_ElectrifiedSword2.png"
+      ],
+      "animation": {
+        "frameTime": 10
+      },
+      "stats": {
+        "health": 12,
+        "speed": 0.25,
+        "attackStrength": 4,
+        "attackSpeed": 800,
+        "attackRange": 45
+      },
+      "size": {
+        "width": 65,
+        "height": 70
+      },
+      "xpValue": 5
+    }
+  }
+}

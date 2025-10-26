@@ -1,0 +1,54 @@
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Temporary Files
+Temporary/
+*.tmp
+*.bak
+*.cache
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build Artifacts (for future)
+dist/
+build/
+*.min.js
+*.min.css
+
+# Dependencies (if you add npm later)
+node_modules/
+
+# Source Files (optional - keep originals separate)
+*.aseprite
+*.psd
+*.ai
+*.xcf
+
+# Backup/Duplicate Files
+*copy.png
+*Copy.png
+* copy.png
+*.backup
+
+# System Files
+$RECYCLE.BIN/

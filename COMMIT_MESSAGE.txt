@@ -1,0 +1,35 @@
+feat: major enhancements - character system, reorganization, and new enemies
+
+This commit includes significant improvements to the original disco-survivors game:
+
+## New Features
+- JSON-based character definition system
+- Visual character editor tool (tools/character-editor.html)
+- 7 enemy types (up from 1): Skeleton, Danger Disc, Trangle, Tomato, Sharp Spiral, 13-Legged Monster, Electrified Sword
+- Automatic sprite flipping (no more .L.png files needed)
+- Modular game.js (separated from index.html)
+
+## Project Organization
+- Created assets/ folder structure (characters, items, environment)
+- Moved documentation to docs/
+- Moved development tools to tools/
+- Added .gitignore
+- 92% reduction in root directory clutter
+
+## Bug Fixes & Improvements
+- Updated all asset paths to organized structure
+- Removed duplicate files
+- Removed obsolete left-facing sprites
+- Better code organization
+- Added comprehensive documentation
+
+## New Documentation
+- PROJECT_STRUCTURE.md - Project layout and file organization
+- REORGANIZATION_SUMMARY.md - Details of reorganization changes
+- docs/CHARACTER_SYSTEM.md - Character definition system guide
+- docs/CHARACTER_EDITOR_README.md - Character editor user guide
+- docs/ENHANCEMENTS.md - Future improvement recommendations
+
+## Credits
+Based on the original disco-survivors by @holdenrehg
+Enhanced version with additional features and improvements
