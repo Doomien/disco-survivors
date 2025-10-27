@@ -8,8 +8,8 @@ const KEY_DOWN = 40;
 const FACE_LEFT = 0;
 const FACE_RIGHT = 1;
 
-const WORLD_WIDTH = 3500;
-const WORLD_HEIGHT = 3500;
+const WORLD_WIDTH = 3000;
+const WORLD_HEIGHT = 3000;
 const MAX_OBJECTS = 25000;
 const ENEMY_SPAWN_COUNT_PER_WAVE = 50;
 const ENEMY_SPAWN_TIME_BETWEEN_WAVES = 5000; // ms
@@ -981,9 +981,9 @@ function boundYToCanvas(y) {
 function focusCameraOn(targetX, targetY) {
     const freeZoneMargin = 90;
     const xOffset = pxStrToNumber(canvasContainer.style.left);
-    const xCenter = window.innerWidth * 4;
+    const xCenter = window.innerWidth / 2;
     const yOffset = pxStrToNumber(canvasContainer.style.top);
-    const yCenter = window.innerHeight * 4;
+    const yCenter = window.innerHeight / 2;
 
     canvasContainer.style.left = lerp(
         xOffset,
