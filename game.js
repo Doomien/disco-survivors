@@ -8,16 +8,16 @@ const KEY_DOWN = 40;
 const FACE_LEFT = 0;
 const FACE_RIGHT = 1;
 
-const WORLD_WIDTH = 2000;
-const WORLD_HEIGHT = 2000;
+const WORLD_WIDTH = 3500;
+const WORLD_HEIGHT = 3500;
 const MAX_OBJECTS = 25000;
 const ENEMY_SPAWN_COUNT_PER_WAVE = 50;
 const ENEMY_SPAWN_TIME_BETWEEN_WAVES = 5000; // ms
 
-const playerImageLeft = makeImage('assets/characters/player/player-1.png');
-const playerImageLeft2 = makeImage('assets/characters/player/player-2.png');
-const playerImageRight = makeImage('assets/characters/player/player-1.png');
-const playerImageRight2 = makeImage('assets/characters/player/player-2.png');
+const playerImage1 = makeImage('assets/characters/player/Colink1.png');
+const playerImage2 = makeImage('assets/characters/player/Colink2.png');
+const playerImage3 = makeImage('assets/characters/player/Colink3.png');
+const playerImage4 = makeImage('assets/characters/player/Colink4.png');
 const skeletonImageLeft = makeImage('assets/characters/enemies/skeleton-1.png');
 const skeletonImageLeft2 = makeImage('assets/characters/enemies/skeleton-2.png');
 const skeletonImageRight = makeImage('assets/characters/enemies/skeleton-1.png');
@@ -27,7 +27,11 @@ const ballImage2 = makeImage('assets/items/ball-2.png');
 const candyDroppedImage = makeImage('assets/items/candy-dropped.png');
 const candyImage = makeImage('assets/items/candy.png');
 const micImage = makeImage('assets/items/mic.png');
-const floorImage = makeImage('assets/environment/floor.png');
+const regularFlowerImage = makeImage('assets/items/RegularFlower.png');
+const electrifiedSwordImage1 = makeImage('assets/characters/enemies/006_ElectrifiedSword.png');
+const electrifiedSwordImage2 = makeImage('assets/characters/enemies/006_ElectrifiedSword2.png');
+const electrifiedSwordImage3 = makeImage('assets/characters/enemies/006_ElectrifiedSword3.png');
+const floorImage = makeImage('assets/environment/Zelda-Style-Test.png');
 
 const gameRunning = true;
 const targetFps = 60;
@@ -155,21 +159,28 @@ function spawnEnemies() {
 class Player {
     constructor(x, y) {
         this.leftAnimation = new Animation([
-            { time: 12, image: playerImageLeft },
-            { time: 12, image: playerImageLeft2 },
+            { time: 8, image: playerImage1 },
+            { time: 8, image: playerImage2 },
+            { time: 8, image: playerImage3 },
+            { time: 8, image: playerImage4 },
         ]);
         this.rightAnimation = new Animation([
-            { time: 12, image: playerImageRight },
-            { time: 12, image: playerImageRight2 },
+            { time: 8, image: playerImage1 },
+            { time: 8, image: playerImage2 },
+            { time: 8, image: playerImage3 },
+            { time: 8, image: playerImage4 },
         ]);
         this.idle = true;
         this.x = x;
         this.y = y;
         this.level = 1;
-        this.width = 30 * 2;
-        this.height = 33 * 2;
+        this.width = 72;   // Colink size
+        this.height = 86;  // Colink size
         this.health = 50;
+        this.baseSpeed = 3;
         this.speed = 3;
+        this.speedBoostActive = false;
+        this.speedBoostEndTime = 0;
         this.items = [new MicWeapon(), new DiscoBallWeapon()];
         this.xp = 0;
         this.nextLevelXp = 10;
@@ -178,6 +189,12 @@ class Player {
     }
 
     update() {
+        // check if speed boost expired...
+        if (this.speedBoostActive && Date.now() >= this.speedBoostEndTime) {
+            this.speedBoostActive = false;
+            this.speed = this.baseSpeed;
+        }
+
         // handle player movement...
         if (input.right) this.x += this.speed;
         if (input.left) this.x -= this.speed;
@@ -225,6 +242,12 @@ class Player {
         this.level += 1;
         this.prevLevelXp = this.nextLevelXp;
         this.nextLevelXp = this.nextLevelXp * 2.5;
+    }
+
+    activateSpeedBoost() {
+        this.speedBoostActive = true;
+        this.speed = this.baseSpeed * 4;  // 4x speed boost
+        this.speedBoostEndTime = Date.now() + 10000;  // 10 seconds duration
     }
 }
 
@@ -386,7 +409,17 @@ class Enemy {
         if (this.destroyed) return;
         this.destroyed = true;
         enemiesDestroyed += 1;
-        objects.push(new Candy(this.x, this.y));
+
+        // Drop item with weighted chances:
+        // 5% Electrified Sword, 10% Regular Flower, 85% Candy
+        const dropRoll = Math.random();
+        if (dropRoll < 0.05) {
+            objects.push(new ElectrifiedSword(this.x, this.y));
+        } else if (dropRoll < 0.15) {
+            objects.push(new RegularFlower(this.x, this.y));
+        } else {
+            objects.push(new Candy(this.x, this.y));
+        }
     }
 }
 
@@ -427,6 +460,105 @@ class Candy {
         if (this.destroyed) return;
         this.destroy();
         player.gainXp(this.xp);
+    }
+
+    destroy() {
+        if (this.destroyed) return;
+        this.destroyed = true;
+    }
+}
+
+class RegularFlower {
+    constructor(x, y) {
+        this.image = regularFlowerImage;
+        this.x = x;
+        this.y = y;
+        this.attractRadius = 200;
+        this.pickupRadius = 50;
+    }
+
+    update() {
+        if (this.destroyed) return;
+
+        if (pointInCircle(this.x, this.y, player.x, player.y, this.pickupRadius)) {
+            this.pickup();
+            return;
+        }
+
+        if (pointInCircle(this.x, this.y, player.x, player.y, this.attractRadius)) {
+            this.x = lerp(this.x, player.x, 0.1);
+            this.y = lerp(this.y, player.y, 0.1);
+        }
+    }
+
+    draw() {
+        context.drawImage(
+            this.image,
+            this.x,
+            this.y,
+            this.image.width, this.image.height
+        );
+    }
+
+    pickup() {
+        if (this.destroyed) return;
+        this.destroy();
+        player.activateSpeedBoost();
+    }
+
+    destroy() {
+        if (this.destroyed) return;
+        this.destroyed = true;
+    }
+}
+
+class ElectrifiedSword {
+    constructor(x, y) {
+        this.animation = new Animation([
+            { time: 10, image: electrifiedSwordImage1 },
+            { time: 10, image: electrifiedSwordImage2 },
+            { time: 10, image: electrifiedSwordImage3 },
+            { time: 10, image: electrifiedSwordImage2 },
+        ]);
+        this.x = x;
+        this.y = y;
+        this.width = 65;
+        this.height = 70;
+        this.attractRadius = 200;
+        this.pickupRadius = 50;
+    }
+
+    update() {
+        if (this.destroyed) return;
+
+        this.animation.update(false);
+
+        if (pointInCircle(this.x, this.y, player.x, player.y, this.pickupRadius)) {
+            this.pickup();
+            return;
+        }
+
+        if (pointInCircle(this.x, this.y, player.x, player.y, this.attractRadius)) {
+            this.x = lerp(this.x, player.x, 0.1);
+            this.y = lerp(this.y, player.y, 0.1);
+        }
+    }
+
+    draw() {
+        const image = this.animation.image();
+        context.drawImage(
+            image,
+            this.x,
+            this.y,
+            this.width, this.height
+        );
+    }
+
+    pickup() {
+        if (this.destroyed) return;
+        this.destroy();
+        // Add the Electrified Sword weapon to the player
+        player.items.push(new ElectrifiedSwordWeapon());
     }
 
     destroy() {
@@ -658,6 +790,68 @@ class MicWeapon extends Weapon {
     }
 }
 
+class ElectrifiedSwordWeapon extends Weapon {
+    constructor() {
+        const attackSpeed = 1600; // ms
+        const attackAnimationFrames = 5;
+        const attackStrength = 4;
+        super(attackSpeed, attackAnimationFrames, attackStrength);
+        this.level = 1;
+        this.radius = 240;
+        this.animation = new Animation([
+            { time: 10, image: electrifiedSwordImage1 },
+            { time: 10, image: electrifiedSwordImage2 },
+            { time: 10, image: electrifiedSwordImage3 },
+            { time: 10, image: electrifiedSwordImage2 },
+        ]);
+        this.angle = Math.PI; // Start at opposite side from mic
+        this.width = 65;
+        this.height = 70;
+        this.enemiesHit = {};
+    }
+
+    update() {
+        this.animation.update(false);
+        this.angle = (this.angle + (0.04 * this.level)) % (2 * Math.PI);
+        this.x = player.x + Math.sin(this.angle) * this.radius;
+        this.y = player.y + Math.cos(this.angle) * this.radius;
+
+        for (const object of objects) {
+            if (object instanceof Enemy) {
+                if (
+                    object.id in this.enemiesHit &&
+                    ((new Date()) - this.enemiesHit[object.id]) < this.attackSpeed
+                ) {
+                    continue;
+                }
+
+                if (
+                    this.x > object.x - 50 &&
+                    this.x < object.x + 50 &&
+                    this.y > object.y - 50 &&
+                    this.y < object.y + 50
+                ) {
+                    object.hit(this.attackStrength);
+                    this.enemiesHit[object.id] = new Date();
+                }
+            }
+        }
+    }
+
+    draw() {
+        const image = this.animation.image();
+        context.save();
+        context.translate(this.x, this.y);
+        context.rotate(this.angle + Math.PI / 2);
+        context.drawImage(
+            image,
+            -this.width / 2, -this.height / 2,
+            this.width, this.height
+        );
+        context.restore();
+    }
+}
+
 // Game Loop
 // ------------------------------------------
 
@@ -747,6 +941,20 @@ function playGame() {
             22
         );
     });
+
+    // draw speed boost indicator...
+    if (player.speedBoostActive) {
+        const timeRemaining = Math.ceil((player.speedBoostEndTime - Date.now()) / 1000);
+        guiTopMiddle(function(x, y) {
+            context.font = `20px monospace`;
+            context.fillStyle = 'yellow';
+            context.strokeStyle = 'black';
+            context.lineWidth = 3;
+            const text = `⚡ SPEED BOOST: ${timeRemaining}s ⚡`;
+            context.strokeText(text, x - 120, y + 60);
+            context.fillText(text, x - 120, y + 60);
+        });
+    }
 }
 
 // Helper Functions
@@ -771,11 +979,11 @@ function boundYToCanvas(y) {
 }
 
 function focusCameraOn(targetX, targetY) {
-    const freeZoneMargin = 30;
+    const freeZoneMargin = 90;
     const xOffset = pxStrToNumber(canvasContainer.style.left);
-    const xCenter = window.innerWidth / 2;
+    const xCenter = window.innerWidth * 4;
     const yOffset = pxStrToNumber(canvasContainer.style.top);
-    const yCenter = window.innerHeight / 2;
+    const yCenter = window.innerHeight * 4;
 
     canvasContainer.style.left = lerp(
         xOffset,

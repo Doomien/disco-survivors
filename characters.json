@@ -133,29 +133,30 @@
       },
       "xpValue": 4
     },
-    "electrified_sword": {
-      "name": "Electrified Sword",
+    "trx": {
+      "name": "TRainbowsaurusRex",
       "sprites": [
-        "assets/characters/enemies/006_ElectrifiedSword.png",
-        "assets/characters/enemies/006_ElectrifiedSword2.png",
-        "assets/characters/enemies/006_ElectrifiedSword3.png",
-        "assets/characters/enemies/006_ElectrifiedSword2.png"
+        "assets/characters/enemies/007_TRainbowsaurusRex.png",
+        "assets/characters/enemies/007_TRainbowsaurusRex2.png",
+        "assets/characters/enemies/007_TRainbowsaurusRex3.png",
+        "assets/characters/enemies/007_TRainbowsaurusRex4.png",
+        "assets/characters/enemies/007_TRainbowsaurusRex5.png"
       ],
       "animation": {
-        "frameTime": 10
+        "frameTime": 6
       },
       "stats": {
-        "health": 12,
-        "speed": 0.25,
-        "attackStrength": 4,
-        "attackSpeed": 800,
-        "attackRange": 45
+        "health": 3,
+        "speed": 0.4,
+        "attackStrength": 1,
+        "attackSpeed": 500,
+        "attackRange": 40
       },
       "size": {
-        "width": 65,
-        "height": 70
+        "width": 128,
+        "height": 103
       },
-      "xpValue": 5
+      "xpValue": 1
     }
   }
 }
