@@ -1,20 +1,57 @@
 // Character Editor Application
 // ------------------------------------------
 
+// API Configuration
+const API_BASE_URL = '/api/v1';
+
 let characterData = { enemies: {} };
 let currentEditingCharacterId = null;
 let spriteInputs = [];
 
+// API Helper Functions
+async function apiRequest(endpoint, options = {}) {
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            ...options
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error.message || 'API request failed');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+    }
+}
+
 // Initialize the editor
 async function init() {
     try {
-        const response = await fetch('../characters.json');
-        characterData = await response.json();
+        const response = await apiRequest('/characters');
+        characterData.enemies = response.data;
         renderCharacterList();
+        showMessage('Characters loaded from API', 'success');
     } catch (error) {
-        console.error('Failed to load characters.json:', error);
-        showMessage('Could not load characters.json. Starting with empty data.', 'error');
-        characterData = { enemies: {} };
+        console.error('Failed to load characters:', error);
+        showMessage(`Could not load characters: ${error.message}. Using local data.`, 'error');
+
+        // Fallback to loading from file
+        try {
+            const fileResponse = await fetch('../characters.json');
+            const fileData = await fileResponse.json();
+            characterData = fileData;
+            renderCharacterList();
+        } catch (fileError) {
+            characterData = { enemies: {} };
+        }
     }
 }
 
@@ -253,7 +290,7 @@ function gatherFormData() {
 }
 
 // Save character changes
-function saveCharacter() {
+async function saveCharacter() {
     const character = gatherFormData();
     if (!character) return;
 
@@ -263,9 +300,21 @@ function saveCharacter() {
         return;
     }
 
-    characterData.enemies[currentEditingCharacterId] = character;
-    showMessage('Character saved successfully!', 'success');
-    renderCharacterList();
+    try {
+        // Update via API
+        await apiRequest(`/characters/${currentEditingCharacterId}`, {
+            method: 'PUT',
+            body: JSON.stringify(character)
+        });
+
+        // Update local data
+        characterData.enemies[currentEditingCharacterId] = character;
+        showMessage('Character saved successfully via API!', 'success');
+        renderCharacterList();
+    } catch (error) {
+        showMessage(`Failed to save character: ${error.message}`, 'error');
+        console.error('Save error:', error);
+    }
 }
 
 // Create new character modal
@@ -279,7 +328,7 @@ function closeNewCharacterModal() {
     document.getElementById('newCharacterModal').classList.remove('active');
 }
 
-function confirmNewCharacter() {
+async function confirmNewCharacter() {
     const id = document.getElementById('newCharacterId').value.trim();
     const name = document.getElementById('newCharacterName').value.trim();
 
@@ -302,7 +351,7 @@ function confirmNewCharacter() {
     }
 
     // Create new character with default values
-    characterData.enemies[id] = {
+    const newCharacter = {
         name: name,
         sprites: ['sprite.png'],
         animation: {
@@ -322,14 +371,31 @@ function confirmNewCharacter() {
         xpValue: 1
     };
 
-    closeNewCharacterModal();
-    renderCharacterList();
-    selectCharacter(id);
-    showMessage(`Character "${name}" created successfully!`, 'success');
+    try {
+        // Create via API
+        await apiRequest('/characters', {
+            method: 'POST',
+            body: JSON.stringify({
+                id: id,
+                data: newCharacter
+            })
+        });
+
+        // Update local data
+        characterData.enemies[id] = newCharacter;
+
+        closeNewCharacterModal();
+        renderCharacterList();
+        selectCharacter(id);
+        showMessage(`Character "${name}" created successfully via API!`, 'success');
+    } catch (error) {
+        showMessage(`Failed to create character: ${error.message}`, 'error');
+        console.error('Create error:', error);
+    }
 }
 
 // Delete character
-function deleteCharacter(event, characterId) {
+async function deleteCharacter(event, characterId) {
     event.stopPropagation();
 
     const character = characterData.enemies[characterId];
@@ -337,20 +403,31 @@ function deleteCharacter(event, characterId) {
         return;
     }
 
-    delete characterData.enemies[characterId];
+    try {
+        // Delete via API
+        await apiRequest(`/characters/${characterId}`, {
+            method: 'DELETE'
+        });
 
-    if (currentEditingCharacterId === characterId) {
-        currentEditingCharacterId = null;
-        document.getElementById('editorContent').innerHTML = `
-            <div class="editor-empty">
-                <h2>Character Deleted</h2>
-                <p>Select another character or create a new one.</p>
-            </div>
-        `;
+        // Update local data
+        delete characterData.enemies[characterId];
+
+        if (currentEditingCharacterId === characterId) {
+            currentEditingCharacterId = null;
+            document.getElementById('editorContent').innerHTML = `
+                <div class="editor-empty">
+                    <h2>Character Deleted</h2>
+                    <p>Select another character or create a new one.</p>
+                </div>
+            `;
+        }
+
+        renderCharacterList();
+        showMessage('Character deleted successfully via API!', 'success');
+    } catch (error) {
+        showMessage(`Failed to delete character: ${error.message}`, 'error');
+        console.error('Delete error:', error);
     }
-
-    renderCharacterList();
-    showMessage('Character deleted', 'success');
 }
 
 // Download JSON file

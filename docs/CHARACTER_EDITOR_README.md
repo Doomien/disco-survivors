@@ -1,21 +1,55 @@
 # Character Editor - User Guide
 
-A graphical web-based tool for editing character definitions in Disco Survivors.
+A graphical web-based tool for editing character definitions in Disco Survivors with real-time API integration.
 
 ## Getting Started
 
-1. Open [character-editor.html](character-editor.html) in your web browser
-2. The editor will automatically load your existing [characters.json](characters.json) file
-3. Start editing!
+### With Docker (Recommended)
+
+1. Start the Docker services:
+   ```bash
+   docker compose up -d
+   ```
+
+2. Open the editor in your browser:
+   ```
+   http://localhost:3333/tools/character-editor.html
+   ```
+
+3. The editor will automatically load characters from the API
+4. All changes are saved immediately to the server via API calls
+
+### Without Docker (Standalone)
+
+1. Open [character-editor.html](../tools/character-editor.html) directly in your web browser
+2. The editor will load from the local [characters.json](../characters.json) file
+3. Changes are saved locally and you'll need to download the updated JSON file
 
 ## Features
 
 ### Character Management
 
-- **View All Characters** - Sidebar shows all defined characters
-- **Create New Character** - Click "New Character" button to add a new enemy type
+- **View All Characters** - Sidebar shows all defined characters loaded from the API
+- **Create New Character** - Click "New Character" button to add a new enemy type (saved via API)
 - **Edit Character** - Click any character in the list to edit its properties
-- **Delete Character** - Hover over a character and click the × button to delete it
+- **Save Changes** - Click "Save Changes" to update the character via API
+- **Delete Character** - Hover over a character and click the × button to delete it (deleted via API)
+
+### API Integration
+
+When running with Docker, the character editor uses the REST API for all operations:
+
+- **Load**: Characters are fetched from `GET /api/v1/characters`
+- **Create**: New characters are saved with `POST /api/v1/characters`
+- **Update**: Changes are saved with `PUT /api/v1/characters/:id`
+- **Delete**: Characters are removed with `DELETE /api/v1/characters/:id`
+
+**Benefits:**
+- ✅ Changes are saved immediately to the server
+- ✅ Automatic backups are created on every save
+- ✅ Multiple users can edit (with file locking protection)
+- ✅ Data validation ensures integrity
+- ✅ No manual file downloads/uploads needed
 
 ### Editing Properties
 
