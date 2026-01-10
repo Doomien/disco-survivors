@@ -34,6 +34,21 @@ This is an enhanced version of the original [disco-survivors](https://github.com
 
 ## How to Play
 
+### Docker (Recommended)
+The easiest way to run the game is with Docker:
+
+```bash
+# Build and run with docker-compose
+docker compose up -d
+
+# Then visit: http://localhost:3333
+```
+
+To stop the container:
+```bash
+docker compose down
+```
+
 ### Online
 Open `index.html` in your web browser.
 
@@ -151,6 +166,10 @@ Contributions welcome! See [docs/ENHANCEMENTS.md](docs/ENHANCEMENTS.md) for idea
 4. Submit a pull request
 
 ## Changelog
+
+### Enhanced Version (v2.1)
+- ✅ Docker support with nginx for easy deployment
+- ✅ Production-ready containerization
 
 ### Enhanced Version (v2.0)
 - ✅ Added 6 new enemy types (7 total)

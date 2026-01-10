@@ -1,0 +1,12 @@
+services:
+  disco-survivors:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: disco-survivors-game
+    ports:
+      - "0.0.0.0:3333:80"
+    restart: unless-stopped
+    labels:
+      - "com.disco-survivors.description=Disco Survivors Game"
+      - "com.disco-survivors.version=2.0"
