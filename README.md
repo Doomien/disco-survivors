@@ -123,6 +123,131 @@ See [docs/CHARACTER_EDITOR_README.md](docs/CHARACTER_EDITOR_README.md) for the f
 
 See [docs/CHARACTER_SYSTEM.md](docs/CHARACTER_SYSTEM.md) for details.
 
+## API Service
+
+This fork includes a REST API for programmatic character management!
+
+### Starting the API
+
+The API runs automatically when you start Docker:
+
+```bash
+docker compose up -d
+```
+
+- **Game**: http://localhost:3333
+- **API**: http://localhost:3333/api/v1 (proxied through nginx)
+- **Direct API Access**: http://localhost:3334 (if needed)
+
+### API Endpoints
+
+**Base URL**: `/api/v1`
+
+#### Health Check
+```bash
+GET /api/v1/health
+```
+
+#### List All Characters
+```bash
+GET /api/v1/characters
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "skeleton": { /* character data */ },
+    "danger_disc": { /* character data */ }
+  }
+}
+```
+
+#### Get Single Character
+```bash
+GET /api/v1/characters/:id
+```
+
+**Example**:
+```bash
+curl http://localhost:3333/api/v1/characters/skeleton
+```
+
+#### Create Character
+```bash
+POST /api/v1/characters
+Content-Type: application/json
+
+{
+  "id": "zombie",
+  "data": {
+    "name": "Zombie",
+    "sprites": ["assets/characters/enemies/zombie.png"],
+    "animation": { "frameTime": 12 },
+    "stats": {
+      "health": 4,
+      "speed": 0.3,
+      "attackStrength": 2,
+      "attackSpeed": 600,
+      "attackRange": 40
+    },
+    "size": { "width": 64, "height": 70 },
+    "xpValue": 2
+  }
+}
+```
+
+#### Update Character
+```bash
+PUT /api/v1/characters/:id
+Content-Type: application/json
+
+{
+  "name": "Updated Name",
+  "sprites": [...],
+  "animation": {...},
+  "stats": {...},
+  "size": {...},
+  "xpValue": 3
+}
+```
+
+#### Delete Character
+```bash
+DELETE /api/v1/characters/:id
+```
+
+### Features
+
+- **Automatic Backups**: Every write creates a timestamped backup in `backups/`
+- **File Locking**: Prevents concurrent write conflicts
+- **Validation**: Joi schema validation ensures data integrity
+- **Error Handling**: Consistent error responses with codes
+- **CORS Enabled**: Accessible from browsers and tools
+
+### Response Format
+
+**Success**:
+```json
+{
+  "success": true,
+  "data": { /* response data */ }
+}
+```
+
+**Error**:
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Error description",
+    "details": []
+  }
+}
+```
+
 ## Documentation
 
 - **[CHARACTER_SYSTEM.md](docs/CHARACTER_SYSTEM.md)** - Character definition system
@@ -166,6 +291,13 @@ Contributions welcome! See [docs/ENHANCEMENTS.md](docs/ENHANCEMENTS.md) for idea
 4. Submit a pull request
 
 ## Changelog
+
+### Enhanced Version (v2.2)
+- ✅ REST API for character management
+- ✅ Full CRUD operations (Create, Read, Update, Delete)
+- ✅ Automatic backups on every write
+- ✅ File locking for concurrent access protection
+- ✅ Joi validation for data integrity
 
 ### Enhanced Version (v2.1)
 - ✅ Docker support with nginx for easy deployment

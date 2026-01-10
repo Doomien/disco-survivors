@@ -7,6 +7,38 @@ services:
     ports:
       - "0.0.0.0:3333:80"
     restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - disco-net
     labels:
       - "com.disco-survivors.description=Disco Survivors Game"
       - "com.disco-survivors.version=2.0"
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: disco-survivors-api
+    ports:
+      - "0.0.0.0:3334:3334"
+    environment:
+      - NODE_ENV=production
+      - PORT=3334
+      - CHARACTERS_FILE=/data/characters.json
+      - BACKUP_DIR=/data/backups
+      - LOG_LEVEL=info
+      - CORS_ORIGIN=*
+    volumes:
+      - ./characters.json:/data/characters.json
+      - ./backups:/data/backups
+    restart: unless-stopped
+    networks:
+      - disco-net
+    labels:
+      - "com.disco-survivors.description=Disco Survivors API"
+      - "com.disco-survivors.version=2.0"
+
+networks:
+  disco-net:
+    driver: bridge
