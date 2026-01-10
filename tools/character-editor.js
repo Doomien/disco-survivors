@@ -1,57 +1,25 @@
-// Character Editor Application
+// Character Editor Application - File-Based Edition
 // ------------------------------------------
-
-// API Configuration
-const API_BASE_URL = '/api/v1';
+// This editor works purely with JSON files (no API integration)
+// For API-based editing, use character-editor2.html instead
 
 let characterData = { enemies: {} };
 let currentEditingCharacterId = null;
 let spriteInputs = [];
 
-// API Helper Functions
-async function apiRequest(endpoint, options = {}) {
-    try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
-            ...options
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.error.message || 'API request failed');
-        }
-
-        return data;
-    } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-    }
-}
-
 // Initialize the editor
 async function init() {
+    // Try to load from characters.json file
     try {
-        const response = await apiRequest('/characters');
-        characterData.enemies = response.data;
+        const fileResponse = await fetch('../characters.json');
+        const fileData = await fileResponse.json();
+        characterData = fileData;
         renderCharacterList();
-        showMessage('Characters loaded from API', 'success');
-    } catch (error) {
-        console.error('Failed to load characters:', error);
-        showMessage(`Could not load characters: ${error.message}. Using local data.`, 'error');
-
-        // Fallback to loading from file
-        try {
-            const fileResponse = await fetch('../characters.json');
-            const fileData = await fileResponse.json();
-            characterData = fileData;
-            renderCharacterList();
-        } catch (fileError) {
-            characterData = { enemies: {} };
-        }
+        showMessage('Characters loaded from file. Remember to download your changes!', 'success');
+    } catch (fileError) {
+        console.error('Could not load characters.json:', fileError);
+        characterData = { enemies: {} };
+        showMessage('Starting with empty character list. Load a JSON file or create new characters.', 'error');
     }
 }
 
@@ -290,7 +258,7 @@ function gatherFormData() {
 }
 
 // Save character changes
-async function saveCharacter() {
+function saveCharacter() {
     const character = gatherFormData();
     if (!character) return;
 
@@ -300,21 +268,10 @@ async function saveCharacter() {
         return;
     }
 
-    try {
-        // Update via API
-        await apiRequest(`/characters/${currentEditingCharacterId}`, {
-            method: 'PUT',
-            body: JSON.stringify(character)
-        });
-
-        // Update local data
-        characterData.enemies[currentEditingCharacterId] = character;
-        showMessage('Character saved successfully via API!', 'success');
-        renderCharacterList();
-    } catch (error) {
-        showMessage(`Failed to save character: ${error.message}`, 'error');
-        console.error('Save error:', error);
-    }
+    // Update local data (stored in memory)
+    characterData.enemies[currentEditingCharacterId] = character;
+    showMessage('Character saved in memory! Use "Download JSON" to save permanently.', 'success');
+    renderCharacterList();
 }
 
 // Create new character modal
@@ -328,7 +285,7 @@ function closeNewCharacterModal() {
     document.getElementById('newCharacterModal').classList.remove('active');
 }
 
-async function confirmNewCharacter() {
+function confirmNewCharacter() {
     const id = document.getElementById('newCharacterId').value.trim();
     const name = document.getElementById('newCharacterName').value.trim();
 
@@ -353,7 +310,7 @@ async function confirmNewCharacter() {
     // Create new character with default values
     const newCharacter = {
         name: name,
-        sprites: ['sprite.png'],
+        sprites: ['assets/characters/enemies/sprite.png'],
         animation: {
             frameTime: 12
         },
@@ -371,31 +328,17 @@ async function confirmNewCharacter() {
         xpValue: 1
     };
 
-    try {
-        // Create via API
-        await apiRequest('/characters', {
-            method: 'POST',
-            body: JSON.stringify({
-                id: id,
-                data: newCharacter
-            })
-        });
+    // Update local data
+    characterData.enemies[id] = newCharacter;
 
-        // Update local data
-        characterData.enemies[id] = newCharacter;
-
-        closeNewCharacterModal();
-        renderCharacterList();
-        selectCharacter(id);
-        showMessage(`Character "${name}" created successfully via API!`, 'success');
-    } catch (error) {
-        showMessage(`Failed to create character: ${error.message}`, 'error');
-        console.error('Create error:', error);
-    }
+    closeNewCharacterModal();
+    renderCharacterList();
+    selectCharacter(id);
+    showMessage(`Character "${name}" created! Remember to download JSON to save.`, 'success');
 }
 
 // Delete character
-async function deleteCharacter(event, characterId) {
+function deleteCharacter(event, characterId) {
     event.stopPropagation();
 
     const character = characterData.enemies[characterId];
@@ -403,31 +346,21 @@ async function deleteCharacter(event, characterId) {
         return;
     }
 
-    try {
-        // Delete via API
-        await apiRequest(`/characters/${characterId}`, {
-            method: 'DELETE'
-        });
+    // Update local data
+    delete characterData.enemies[characterId];
 
-        // Update local data
-        delete characterData.enemies[characterId];
-
-        if (currentEditingCharacterId === characterId) {
-            currentEditingCharacterId = null;
-            document.getElementById('editorContent').innerHTML = `
-                <div class="editor-empty">
-                    <h2>Character Deleted</h2>
-                    <p>Select another character or create a new one.</p>
-                </div>
-            `;
-        }
-
-        renderCharacterList();
-        showMessage('Character deleted successfully via API!', 'success');
-    } catch (error) {
-        showMessage(`Failed to delete character: ${error.message}`, 'error');
-        console.error('Delete error:', error);
+    if (currentEditingCharacterId === characterId) {
+        currentEditingCharacterId = null;
+        document.getElementById('editorContent').innerHTML = `
+            <div class="editor-empty">
+                <h2>Character Deleted</h2>
+                <p>Select another character or create a new one.</p>
+            </div>
+        `;
     }
+
+    renderCharacterList();
+    showMessage('Character deleted from memory! Remember to download JSON to save.', 'success');
 }
 
 // Download JSON file

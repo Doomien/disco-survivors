@@ -127,6 +127,8 @@ See [docs/CHARACTER_SYSTEM.md](docs/CHARACTER_SYSTEM.md) for details.
 
 This fork includes a REST API for programmatic character management!
 
+📖 **[Complete API Documentation](docs/API_REFERENCE.md)** - Full API reference with examples, validation rules, and troubleshooting
+
 ### Starting the API
 
 The API runs automatically when you start Docker:
@@ -251,7 +253,8 @@ DELETE /api/v1/characters/:id
 ## Documentation
 
 - **[CHARACTER_SYSTEM.md](docs/CHARACTER_SYSTEM.md)** - Character definition system
-- **[CHARACTER_EDITOR_README.md](docs/CHARACTER_EDITOR_README.md)** - Editor guide
+- **[CHARACTER_EDITOR_README.md](docs/CHARACTER_EDITOR_README.md)** - Editor guide (file-based & API-based)
+- **[API_REFERENCE.md](docs/API_REFERENCE.md)** - Complete REST API documentation
 - **[ENHANCEMENTS.md](docs/ENHANCEMENTS.md)** - Future improvements
 - **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** - File organization
 - **[REORGANIZATION_SUMMARY.md](REORGANIZATION_SUMMARY.md)** - Change log

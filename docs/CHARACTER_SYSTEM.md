@@ -6,7 +6,7 @@ This game now uses a JSON-based character definition system that allows you to e
 
 ### Character Definition File
 
-All characters are defined in [characters.json](characters.json). The file contains an `enemies` object where each key is a unique enemy type identifier.
+All characters are defined in `characters.json` in the project root. The file contains an `enemies` object where each key is a unique enemy type identifier.
 
 ### JSON Schema
 
@@ -66,6 +66,29 @@ All characters are defined in [characters.json](characters.json). The file conta
 #### Rewards
 - **xpValue**: Amount of XP dropped when defeated (not currently used but stored for future implementation)
 
+### Validation Rules
+
+When using the API or character editor, the following validation rules apply:
+
+#### Character ID (Key)
+- Must contain only **lowercase letters**, **numbers**, and **underscores**
+- Length: 1-50 characters
+- Cannot use reserved IDs: `health`, `status`, `api`, `v1`, `characters`, `new`, `edit`, `delete`
+- Examples: `skeleton`, `danger_disc`, `boss_1`
+
+#### Field Limits
+- **name**: 1-100 characters
+- **sprites**: 1-20 sprite paths (must end with .png, .jpg, .jpeg, or .gif)
+- **animation.frameTime**: 1-60 frames
+- **stats.health**: 1-1000
+- **stats.speed**: 0-10 pixels/frame
+- **stats.attackStrength**: 0-1000
+- **stats.attackSpeed**: 1-10000 milliseconds
+- **stats.attackRange**: 1-1000 pixels
+- **size.width**: 1-500 pixels
+- **size.height**: 1-500 pixels
+- **xpValue**: 0-10000
+
 ## Adding New Enemies
 
 ### Step 1: Create Sprite Images
@@ -85,7 +108,10 @@ Add a new entry to the `enemies` object:
   "enemies": {
     "my_new_enemy": {
       "name": "My Cool Enemy",
-      "sprites": ["enemy-walk-1.png", "enemy-walk-2.png"],
+      "sprites": [
+        "assets/characters/enemies/enemy-walk-1.png",
+        "assets/characters/enemies/enemy-walk-2.png"
+      ],
       "animation": {
         "frameTime": 10
       },
@@ -112,7 +138,7 @@ Reload the game and your new enemy will automatically appear in the spawn rotati
 
 ## Example Enemy Types
 
-The default [characters.json](characters.json) includes three enemy types:
+The default `characters.json` file includes seven enemy types (skeleton, danger_disc, trangle, tomato, sharp_spiral, thirteen_legged_monster, trx). Here are a few examples:
 
 ### Skeleton (Basic Enemy)
 - Health: 3
@@ -134,11 +160,12 @@ The default [characters.json](characters.json) includes three enemy types:
 
 ## Spawn System
 
-The game automatically spawns enemies from all defined types in [characters.json](characters.json):
+The game automatically spawns enemies from all defined types in `characters.json`:
 - Enemies spawn in waves every 5 seconds
 - 50 enemies per wave
-- Enemy types are randomly selected from available definitions
+- Enemy types are randomly selected with equal probability from available definitions
 - Enemies spawn 900-1200 pixels away from the player
+- All enemy types defined in the JSON file are included in the spawn pool
 
 ## Customization Tips
 

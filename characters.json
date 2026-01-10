@@ -55,7 +55,7 @@
       },
       "stats": {
         "health": 2,
-        "speed": 0.8,
+        "speed": 10,
         "attackStrength": 1,
         "attackSpeed": 400,
         "attackRange": 40

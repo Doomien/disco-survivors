@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Disco Survivors - Character Editor</title>
+    <title>Disco Survivors - Character Editor (API)</title>
     <style>
         * {
             margin: 0;
@@ -13,22 +13,23 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
             min-height: 100vh;
             padding: 20px;
+            color: #e2e8f0;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            background: white;
+            background: #2d3748;
             border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             overflow: hidden;
         }
 
         header {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 30px;
             text-align: center;
@@ -44,6 +45,24 @@
             font-size: 1.1em;
         }
 
+        .api-status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .api-status.connected {
+            background: #48bb78;
+            color: white;
+        }
+
+        .api-status.disconnected {
+            background: #f56565;
+            color: white;
+        }
+
         .main-content {
             display: grid;
             grid-template-columns: 300px 1fr;
@@ -52,8 +71,8 @@
         }
 
         .sidebar {
-            background: #f7fafc;
-            border-right: 1px solid #e2e8f0;
+            background: #1a202c;
+            border-right: 1px solid #4a5568;
             padding: 20px;
         }
 
@@ -62,7 +81,7 @@
         }
 
         .character-item {
-            background: white;
+            background: #2d3748;
             padding: 12px 16px;
             margin-bottom: 8px;
             border-radius: 6px;
@@ -75,14 +94,14 @@
         }
 
         .character-item:hover {
-            border-color: #5a67d8;
+            border-color: #667eea;
             transform: translateX(4px);
         }
 
         .character-item.active {
-            background: #5a67d8;
+            background: #667eea;
             color: white;
-            border-color: #5a67d8;
+            border-color: #667eea;
         }
 
         .character-item .char-name {
@@ -107,14 +126,20 @@
         }
 
         .btn-primary {
-            background: #5a67d8;
+            background: #667eea;
             color: white;
         }
 
         .btn-primary:hover {
-            background: #4c51bf;
+            background: #5a67d8;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(90, 103, 216, 0.4);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #4a5568;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .btn-success {
@@ -122,7 +147,7 @@
             color: white;
         }
 
-        .btn-success:hover {
+        .btn-success:hover:not(:disabled) {
             background: #38a169;
         }
 
@@ -131,17 +156,17 @@
             color: white;
         }
 
-        .btn-danger:hover {
+        .btn-danger:hover:not(:disabled) {
             background: #e53e3e;
         }
 
         .btn-secondary {
-            background: #718096;
+            background: #4a5568;
             color: white;
         }
 
         .btn-secondary:hover {
-            background: #4a5568;
+            background: #718096;
         }
 
         .btn-small {
@@ -154,8 +179,14 @@
             margin-bottom: 10px;
         }
 
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .editor-panel {
             padding: 30px;
+            background: #2d3748;
         }
 
         .editor-empty {
@@ -166,6 +197,7 @@
 
         .editor-empty h2 {
             margin-bottom: 10px;
+            color: #e2e8f0;
         }
 
         .form-section {
@@ -173,10 +205,10 @@
         }
 
         .form-section h3 {
-            color: #2d3748;
+            color: #e2e8f0;
             margin-bottom: 15px;
             padding-bottom: 8px;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid #4a5568;
         }
 
         .form-group {
@@ -186,7 +218,7 @@
         label {
             display: block;
             margin-bottom: 6px;
-            color: #4a5568;
+            color: #cbd5e0;
             font-weight: 600;
             font-size: 14px;
         }
@@ -196,17 +228,24 @@
         textarea {
             width: 100%;
             padding: 10px 12px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid #4a5568;
             border-radius: 6px;
             font-size: 14px;
             transition: all 0.2s;
+            background: #1a202c;
+            color: #e2e8f0;
         }
 
         input:focus,
         textarea:focus {
             outline: none;
-            border-color: #5a67d8;
-            box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.1);
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .sprite-input-group {
@@ -219,38 +258,15 @@
             flex: 1;
         }
 
-        .sprite-list {
-            margin-bottom: 10px;
-        }
-
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
         }
 
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            padding: 20px;
-            background: #f7fafc;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .json-viewer {
-            background: #1a202c;
-            color: #68d391;
-            padding: 20px;
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            max-height: 400px;
-            overflow: auto;
-            margin-top: 20px;
-        }
-
         .success-message,
-        .error-message {
+        .error-message,
+        .info-message {
             padding: 12px 16px;
             border-radius: 6px;
             margin-bottom: 20px;
@@ -258,20 +274,26 @@
         }
 
         .success-message {
-            background: #c6f6d5;
-            color: #22543d;
+            background: #2f855a;
+            color: #c6f6d5;
             border: 2px solid #48bb78;
         }
 
         .error-message {
-            background: #fed7d7;
-            color: #742a2a;
+            background: #c53030;
+            color: #fed7d7;
             border: 2px solid #f56565;
+        }
+
+        .info-message {
+            background: #2c5282;
+            color: #bee3f8;
+            border: 2px solid #4299e1;
         }
 
         .helper-text {
             font-size: 12px;
-            color: #718096;
+            color: #a0aec0;
             margin-top: 4px;
         }
 
@@ -284,10 +306,6 @@
             opacity: 1;
         }
 
-        #fileInput {
-            display: none;
-        }
-
         .modal {
             display: none;
             position: fixed;
@@ -295,7 +313,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
             z-index: 1000;
             align-items: center;
             justify-content: center;
@@ -306,13 +324,14 @@
         }
 
         .modal-content {
-            background: white;
+            background: #2d3748;
             border-radius: 12px;
             padding: 30px;
             max-width: 500px;
             width: 90%;
             max-height: 90vh;
             overflow: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
         }
 
         .modal-header {
@@ -320,7 +339,7 @@
         }
 
         .modal-header h2 {
-            color: #2d3748;
+            color: #e2e8f0;
         }
 
         .modal-actions {
@@ -329,28 +348,54 @@
             margin-top: 20px;
             justify-content: flex-end;
         }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .validation-error {
+            color: #fc8181;
+            font-size: 12px;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>Disco Survivors</h1>
-            <div class="subtitle">Character Editor (File-Based)</div>
+            <div class="subtitle">Character Editor (API-Based)</div>
+            <div id="apiStatus" class="api-status disconnected">API Disconnected</div>
         </header>
 
         <div class="main-content">
             <aside class="sidebar">
-                <button class="btn btn-primary btn-block" onclick="createNewCharacter()">+ New Character</button>
-                <button class="btn btn-secondary btn-block" onclick="loadFromFile()">Load JSON File</button>
-                <button class="btn btn-success btn-block" onclick="downloadJSON()">Download JSON</button>
+                <button class="btn btn-primary btn-block" onclick="createNewCharacter()" id="newCharBtn">+ New Character</button>
+                <button class="btn btn-secondary btn-block" onclick="refreshCharacters()" id="refreshBtn">🔄 Refresh</button>
 
-                <div class="character-list" id="characterList"></div>
+                <div class="character-list" id="characterList">
+                    <div style="text-align: center; padding: 20px; color: #a0aec0;">
+                        <div class="loading"></div>
+                        <div style="margin-top: 10px;">Loading...</div>
+                    </div>
+                </div>
             </aside>
 
             <main class="editor-panel">
                 <div id="editorContent" class="editor-empty">
-                    <h2>Welcome to the Character Editor</h2>
+                    <h2>Welcome to the API Character Editor</h2>
                     <p>Select a character from the list or create a new one to get started.</p>
+                    <p style="margin-top: 10px; font-size: 0.9em; color: #718096;">All changes are saved directly to the server via API.</p>
                 </div>
             </main>
         </div>
@@ -364,22 +409,22 @@
             </div>
             <div class="form-group">
                 <label>Character ID (unique identifier)</label>
-                <input type="text" id="newCharacterId" placeholder="e.g., zombie, ghost, etc.">
-                <div class="helper-text">Use lowercase letters, numbers, and underscores only</div>
+                <input type="text" id="newCharacterId" placeholder="e.g., zombie, ghost_warrior">
+                <div class="helper-text">Lowercase letters, numbers, and underscores only (1-50 chars)</div>
+                <div id="idValidationError" class="validation-error"></div>
             </div>
             <div class="form-group">
                 <label>Character Name</label>
-                <input type="text" id="newCharacterName" placeholder="e.g., Zombie">
+                <input type="text" id="newCharacterName" placeholder="e.g., Zombie Warrior">
+                <div class="helper-text">Display name (1-100 chars)</div>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeNewCharacterModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="confirmNewCharacter()">Create</button>
+                <button class="btn btn-primary" onclick="confirmNewCharacter()" id="createCharBtn">Create</button>
             </div>
         </div>
     </div>
 
-    <input type="file" id="fileInput" accept=".json" onchange="handleFileUpload(event)">
-
-    <script src="character-editor.js"></script>
+    <script src="character-editor2.js"></script>
 </body>
 </html>
