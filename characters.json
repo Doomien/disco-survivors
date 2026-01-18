@@ -55,13 +55,13 @@
       },
       "stats": {
         "health": 2,
-        "speed": 10,
+        "speed": 0.5,
         "attackStrength": 1,
         "attackSpeed": 400,
         "attackRange": 40
       },
       "size": {
-        "width": 60,
+        "width": 62,
         "height": 66
       },
       "xpValue": 2
@@ -157,6 +157,27 @@
         "height": 103
       },
       "xpValue": 1
+    },
+    "skaryteeth": {
+      "name": "Skary Teeth",
+      "sprites": [
+        "assets/characters/enemies/SkaryTeeth-Pixel.png"
+      ],
+      "animation": {
+        "frameTime": 12
+      },
+      "stats": {
+        "health": 2,
+        "speed": 0.5,
+        "attackStrength": 1,
+        "attackSpeed": 500,
+        "attackRange": 37
+      },
+      "size": {
+        "width": 60,
+        "height": 64
+      },
+      "xpValue": 10
     }
   }
 }

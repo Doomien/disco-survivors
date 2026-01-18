@@ -9,6 +9,13 @@ services:
     restart: unless-stopped
     depends_on:
       - api
+    volumes:
+      # Mount files for live updates (no rebuild needed!)
+      - ./characters.json:/usr/share/nginx/html/characters.json
+      - ./assets:/usr/share/nginx/html/assets
+      - ./game.js:/usr/share/nginx/html/game.js
+      - ./tools:/usr/share/nginx/html/tools
+      - ./index.html:/usr/share/nginx/html/index.html
     networks:
       - disco-net
     labels:
@@ -27,11 +34,13 @@ services:
       - PORT=3334
       - CHARACTERS_FILE=/data/characters.json
       - BACKUP_DIR=/data/backups
+      - ASSETS_DIR=/data/assets
       - LOG_LEVEL=info
       - CORS_ORIGIN=*
     volumes:
       - ./characters.json:/data/characters.json
       - ./backups:/data/backups
+      - ./assets:/data/assets
     restart: unless-stopped
     networks:
       - disco-net

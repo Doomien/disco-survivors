@@ -265,6 +265,13 @@ function renderEditorForm(characterId, character) {
                     <button type="button" class="btn btn-secondary btn-small" onclick="addSpriteInput()">+ Add Frame</button>
                     <div class="helper-text">PNG/JPG/GIF files for animation frames (1-20 sprites, right-facing only)</div>
                 </div>
+                <div class="form-group" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #4a5568;">
+                    <label>Upload New Sprite Images</label>
+                    <input type="file" id="spriteUpload" accept="image/png,image/jpeg,image/gif" multiple style="display: none;" onchange="handleSpriteUpload(event)">
+                    <button type="button" class="btn btn-primary btn-small" onclick="document.getElementById('spriteUpload').click()">📁 Upload Images</button>
+                    <div class="helper-text">Select one or more image files to upload (max 5MB each)</div>
+                    <div id="uploadProgress" style="margin-top: 10px;"></div>
+                </div>
             </div>
 
             <!-- Animation -->
@@ -603,6 +610,91 @@ async function refreshCharacters() {
     } finally {
         refreshBtn.disabled = false;
         refreshBtn.textContent = '🔄 Refresh';
+    }
+}
+
+// ======================
+// Image Upload Functions
+// ======================
+
+async function handleSpriteUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const progressEl = document.getElementById('uploadProgress');
+    if (!progressEl) return;
+
+    // Validate file sizes
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const oversized = Array.from(files).filter(f => f.size > maxSize);
+    if (oversized.length > 0) {
+        progressEl.innerHTML = '<div class="error-message">Some files are too large (max 5MB)</div>';
+        event.target.value = ''; // Clear the input
+        return;
+    }
+
+    // Show uploading state
+    progressEl.innerHTML = '<div class="info-message">⏳ Uploading ' + files.length + ' file(s)...</div>';
+
+    try {
+        const formData = new FormData();
+
+        // Add all files to form data
+        if (files.length === 1) {
+            formData.append('sprite', files[0]);
+            const response = await fetch('/api/v1/uploads/character-sprite', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.error?.message || 'Upload failed');
+            }
+
+            // Add the uploaded sprite path to the sprite inputs
+            spriteInputs.push(result.data.path);
+            renderSpriteInputs();
+
+            progressEl.innerHTML = `<div class="success-message">✓ Uploaded: ${result.data.originalName}</div>`;
+        } else {
+            // Multiple files
+            for (const file of files) {
+                formData.append('sprites', file);
+            }
+
+            const response = await fetch('/api/v1/uploads/character-sprites', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.error?.message || 'Upload failed');
+            }
+
+            // Add all uploaded sprite paths
+            result.data.files.forEach(file => {
+                spriteInputs.push(file.path);
+            });
+            renderSpriteInputs();
+
+            progressEl.innerHTML = `<div class="success-message">✓ Uploaded ${result.data.count} file(s)</div>`;
+        }
+
+        showMessage('Images uploaded successfully! Remember to save your character.', 'success');
+
+        // Clear the progress message after 5 seconds
+        setTimeout(() => {
+            if (progressEl.innerHTML.includes('Uploaded')) {
+                progressEl.innerHTML = '';
+            }
+        }, 5000);
+    } catch (error) {
+        progressEl.innerHTML = `<div class="error-message">Upload failed: ${error.message}</div>`;
+    } finally {
+        // Clear the file input
+        event.target.value = '';
     }
 }
 

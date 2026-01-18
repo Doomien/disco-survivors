@@ -8,6 +8,7 @@ const logger = require('./utils/logger');
 const FileService = require('./services/fileService');
 const { router: charactersRouter, setFileService } = require('./routes/characters');
 const healthRouter = require('./routes/health');
+const uploadsRouter = require('./routes/uploads');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 // Configuration
@@ -54,6 +55,7 @@ setFileService(fileService);
 // Routes
 app.use('/api/v1/health', healthRouter);
 app.use('/api/v1/characters', charactersRouter);
+app.use('/api/v1/uploads', uploadsRouter);
 
 // 404 handler
 app.use(notFoundHandler);

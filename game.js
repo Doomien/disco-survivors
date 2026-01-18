@@ -14,10 +14,26 @@ const MAX_OBJECTS = 25000;
 const ENEMY_SPAWN_COUNT_PER_WAVE = 50;
 const ENEMY_SPAWN_TIME_BETWEEN_WAVES = 5000; // ms
 
-const playerImage1 = makeImage('assets/characters/player/Colink1.png');
-const playerImage2 = makeImage('assets/characters/player/Colink2.png');
-const playerImage3 = makeImage('assets/characters/player/Colink3.png');
-const playerImage4 = makeImage('assets/characters/player/Colink4.png');
+// Game Configuration - Toggle features on/off
+const GAME_CONFIG = {
+    weapons: {
+        micWeapon: true,        // Microphone weapon
+        discoBallWeapon: false  // Disco ball weapon (disabled)
+    }
+};
+
+// Player character images
+// Sean character (Character 1)
+const seanImage1 = makeImage('assets/characters/player/sean.png');
+const seanImage2 = makeImage('assets/characters/player/sean.png');
+const seanImage3 = makeImage('assets/characters/player/sean.png');
+const seanImage4 = makeImage('assets/characters/player/sean.png');
+
+// MicrowaveMan character (Character 2)
+const microwaveManImage1 = makeImage('assets/characters/player/Microwave Man_Pixel.png');
+const microwaveManImage2 = makeImage('assets/characters/player/Microwave Man_Pixel.png');
+const microwaveManImage3 = makeImage('assets/characters/player/Microwave Man_Pixel.png');
+const microwaveManImage4 = makeImage('assets/characters/player/Microwave Man_Pixel.png');
 const skeletonImageLeft = makeImage('assets/characters/enemies/skeleton-1.png');
 const skeletonImageLeft2 = makeImage('assets/characters/enemies/skeleton-2.png');
 const skeletonImageRight = makeImage('assets/characters/enemies/skeleton-1.png');
@@ -158,30 +174,46 @@ function spawnEnemies() {
 
 class Player {
     constructor(x, y) {
-        this.leftAnimation = new Animation([
-            { time: 8, image: playerImage1 },
-            { time: 8, image: playerImage2 },
-            { time: 8, image: playerImage3 },
-            { time: 8, image: playerImage4 },
-        ]);
-        this.rightAnimation = new Animation([
-            { time: 8, image: playerImage1 },
-            { time: 8, image: playerImage2 },
-            { time: 8, image: playerImage3 },
-            { time: 8, image: playerImage4 },
-        ]);
+        // Character definitions
+        this.characters = {
+            sean: {
+                name: 'Sean',
+                images: [seanImage1, seanImage2, seanImage3, seanImage4],
+                width: 108,
+                height: 255
+            },
+            microwaveMan: {
+                name: 'MicrowaveMan',
+                images: [microwaveManImage1, microwaveManImage2, microwaveManImage3, microwaveManImage4],
+                width: 120,
+                height: 120
+            }
+        };
+
+        this.currentCharacter = 'sean'; // Start with sean
+        this.loadCharacterAnimations();
+
         this.idle = true;
         this.x = x;
         this.y = y;
         this.level = 1;
-        this.width = 72;   // Colink size
-        this.height = 86;  // Colink size
+        this.width = this.characters[this.currentCharacter].width;
+        this.height = this.characters[this.currentCharacter].height;
         this.health = 50;
         this.baseSpeed = 3;
         this.speed = 3;
         this.speedBoostActive = false;
         this.speedBoostEndTime = 0;
-        this.items = [new MicWeapon(), new DiscoBallWeapon()];
+
+        // Initialize weapons based on config
+        this.items = [];
+        if (GAME_CONFIG.weapons.micWeapon) {
+            this.items.push(new MicWeapon());
+        }
+        if (GAME_CONFIG.weapons.discoBallWeapon) {
+            this.items.push(new DiscoBallWeapon());
+        }
+
         this.xp = 0;
         this.nextLevelXp = 10;
         this.prevLevelXp = 0;
@@ -224,6 +256,33 @@ class Player {
             this.y - (this.height / 2.0),
             this.width, this.height
         );
+    }
+
+    loadCharacterAnimations() {
+        const char = this.characters[this.currentCharacter];
+        this.leftAnimation = new Animation([
+            { time: 8, image: char.images[0] },
+            { time: 8, image: char.images[1] },
+            { time: 8, image: char.images[2] },
+            { time: 8, image: char.images[3] },
+        ]);
+        this.rightAnimation = new Animation([
+            { time: 8, image: char.images[0] },
+            { time: 8, image: char.images[1] },
+            { time: 8, image: char.images[2] },
+            { time: 8, image: char.images[3] },
+        ]);
+        this.animation = this.leftAnimation; // Set default
+    }
+
+    switchCharacter(characterKey) {
+        if (!this.characters[characterKey]) return;
+        this.currentCharacter = characterKey;
+        const char = this.characters[this.currentCharacter];
+        this.width = char.width;
+        this.height = char.height;
+        this.loadCharacterAnimations();
+        this.setDirection(this.direction || FACE_LEFT);
     }
 
     setDirection(direction) {
@@ -905,6 +964,7 @@ function playGame() {
         ` 💀: ${enemiesDestroyed}` +
         ` LV${player.level}` +
         ` ${leftPad(timer.minutes, 2, 0)}:${leftPad(timer.seconds, 2, 0)}`,
+        `🎮 ${player.characters[player.currentCharacter].name}`
     ];
     const measures = texts.map(text => measureTextDimensions(text));
     guiTopMiddle(function(x, y) {
@@ -1141,6 +1201,11 @@ window.addEventListener('keydown', (e) => {
         player.setDirection(FACE_RIGHT);
     } else if (e.keyCode === KEY_UP) input.up = true;
     else if (e.keyCode === KEY_DOWN) input.down = true;
+    else if (e.keyCode === 49) { // Key "1" - Switch to Sean
+        player.switchCharacter('sean');
+    } else if (e.keyCode === 50) { // Key "2" - Switch to MicrowaveMan
+        player.switchCharacter('microwaveMan');
+    }
 });
 
 window.addEventListener('keyup', (e) => {
