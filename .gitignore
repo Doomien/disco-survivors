@@ -52,3 +52,7 @@ node_modules/
 
 # System Files
 $RECYCLE.BIN/
+
+# Custom Content (gitignored - user-specific assets and configs)
+assets/custom/
+config/custom/

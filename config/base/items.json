@@ -1,0 +1,52 @@
+{
+  "weapons": {
+    "discoBallWeapon": {
+      "name": "Disco Ball",
+      "enabled": true,
+      "type": "weapon",
+      "attackSpeed": 14000,
+      "attackAnimationFrames": 5,
+      "level": 4,
+      "projectile": "discoBall"
+    },
+    "micWeapon": {
+      "name": "Microphone",
+      "enabled": true,
+      "type": "weapon",
+      "sprite": "assets/base/items/mic.png",
+      "attackSpeed": 1000,
+      "attackAnimationFrames": 5,
+      "attackStrength": 1,
+      "level": 8,
+      "radius": 100
+    }
+  },
+  "projectiles": {
+    "discoBall": {
+      "name": "Disco Ball",
+      "sprites": [
+        "assets/base/items/ball-1.png",
+        "assets/base/items/ball-2.png"
+      ],
+      "animation": {
+        "frameTime": 8
+      },
+      "speed": 2,
+      "attackStrength": 1,
+      "size": {
+        "width": 60,
+        "height": 60
+      }
+    }
+  },
+  "collectibles": {
+    "candy": {
+      "name": "Candy",
+      "sprite": "assets/base/items/candy.png",
+      "droppedSprite": "assets/base/items/candy-dropped.png",
+      "attractRadius": 200,
+      "pickupRadius": 50,
+      "xpValue": 1
+    }
+  }
+}

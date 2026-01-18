@@ -1,0 +1,25 @@
+{
+  "players": {
+    "default": {
+      "name": "Player",
+      "sprites": [
+        "assets/base/characters/player/player-1.png",
+        "assets/base/characters/player/player-2.png",
+        "assets/base/characters/player/player-1.png",
+        "assets/base/characters/player/player-2.png"
+      ],
+      "animation": {
+        "frameTime": 8
+      },
+      "size": {
+        "width": 60,
+        "height": 60
+      },
+      "stats": {
+        "health": 50,
+        "baseSpeed": 3,
+        "level": 1
+      }
+    }
+  }
+}

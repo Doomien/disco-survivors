@@ -1,0 +1,26 @@
+{
+  "enemies": {
+    "skeleton": {
+      "name": "Skeleton",
+      "sprites": [
+        "assets/base/characters/enemies/skeleton-1.png",
+        "assets/base/characters/enemies/skeleton-2.png"
+      ],
+      "animation": {
+        "frameTime": 12
+      },
+      "stats": {
+        "health": 3,
+        "speed": 0.4,
+        "attackStrength": 1,
+        "attackSpeed": 500,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 60,
+        "height": 66
+      },
+      "xpValue": 1
+    }
+  }
+}

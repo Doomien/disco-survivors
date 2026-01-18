@@ -1,0 +1,31 @@
+{
+  "world": {
+    "width": 3000,
+    "height": 3000
+  },
+  "assets": {
+    "basePath": "assets/base",
+    "customPath": "assets/custom",
+    "environment": {
+      "floor": "environment/Zelda-Style-Test.png"
+    }
+  },
+  "gameplay": {
+    "maxObjects": 25000,
+    "spawnWaveSize": 50,
+    "targetFps": 60
+  },
+  "weapons": {
+    "micWeapon": true,
+    "discoBallWeapon": true
+  },
+  "defaultPlayer": "sean",
+  "paths": {
+    "enemies": "config/base/enemies.json",
+    "customEnemies": "config/custom/enemies.json",
+    "players": "config/base/players.json",
+    "customPlayers": "config/custom/players.json",
+    "items": "config/base/items.json",
+    "customItems": "config/custom/items.json"
+  }
+}
