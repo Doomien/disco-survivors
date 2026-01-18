@@ -69,17 +69,80 @@ let nextEnemyId = 0;
 let timeSinceLastEnemySpawn = Date.now(); // ms
 let characterData = null; // Will hold loaded character definitions
 let characterImages = {}; // Cache for character sprite images
+let gameConfig = null; // Game configuration
+let playerConfig = null; // Player configuration
+let itemConfig = null; // Item configuration
 
 // Helper Functions
 // ------------------------------------------
 
 /**
- * Load character definitions from JSON file
+ * Load a JSON config file with fallback
+ */
+async function loadConfig(path, fallback = null) {
+    try {
+        const response = await fetch(path);
+        if (!response.ok) {
+            console.warn(`Config not found: ${path}, using fallback`);
+            return fallback;
+        }
+        return await response.json();
+    } catch (error) {
+        console.warn(`Failed to load ${path}:`, error);
+        return fallback;
+    }
+}
+
+/**
+ * Merge two config objects (custom overrides base)
+ */
+function mergeConfigs(base, custom) {
+    if (!custom) return base;
+    const merged = { ...base };
+    for (const [key, value] of Object.entries(custom)) {
+        if (typeof value === 'object' && !Array.isArray(value)) {
+            merged[key] = { ...(merged[key] || {}), ...value };
+        } else {
+            merged[key] = value;
+        }
+    }
+    return merged;
+}
+
+/**
+ * Load all game configuration files
+ */
+async function loadGameConfig() {
+    try {
+        gameConfig = await loadConfig('config/game.config.json');
+        console.log('Game config loaded:', gameConfig);
+    } catch (error) {
+        console.error('Failed to load game config:', error);
+        gameConfig = {
+            world: { width: 3000, height: 3000 },
+            assets: { basePath: 'assets/base', customPath: 'assets/custom' },
+            gameplay: { maxObjects: 25000, spawnWaveSize: 50 },
+            defaultPlayer: 'sean'
+        };
+    }
+}
+
+/**
+ * Load character definitions from JSON files (enemies)
  */
 async function loadCharacterData() {
     try {
-        const response = await fetch('characters.json');
-        characterData = await response.json();
+        // Load base enemies
+        const baseEnemies = await loadConfig('config/base/enemies.json', { enemies: {} });
+
+        // Load custom enemies (may not exist, that's okay)
+        const customEnemies = await loadConfig('config/custom/enemies.json', { enemies: {} });
+
+        // Merge configs
+        characterData = {
+            enemies: { ...baseEnemies.enemies, ...customEnemies.enemies }
+        };
+
         console.log('Character data loaded:', characterData);
 
         // Pre-load all character images
@@ -102,7 +165,7 @@ async function loadCharacterData() {
             enemies: {
                 skeleton: {
                     name: "Skeleton",
-                    sprites: ["skeleton-1.png", "skeleton-2.png"],
+                    sprites: ["assets/base/characters/enemies/skeleton-1.png", "assets/base/characters/enemies/skeleton-2.png"],
                     animation: { frameTime: 12 },
                     stats: {
                         health: 3,
@@ -116,8 +179,48 @@ async function loadCharacterData() {
                 }
             }
         };
-        // Load fallback images with new format
-        characterImages.skeleton = [skeletonImageRight, skeletonImageRight2];
+        // Load fallback images
+        characterImages.skeleton = characterData.enemies.skeleton.sprites.map(src => makeImage(src));
+    }
+}
+
+/**
+ * Load player configuration
+ */
+async function loadPlayerConfig() {
+    try {
+        const basePlayers = await loadConfig('config/base/players.json', { players: {} });
+        const customPlayers = await loadConfig('config/custom/players.json', { players: {} });
+
+        playerConfig = {
+            players: { ...basePlayers.players, ...customPlayers.players }
+        };
+
+        console.log('Player config loaded:', playerConfig);
+    } catch (error) {
+        console.error('Failed to load player config:', error);
+        playerConfig = { players: {} };
+    }
+}
+
+/**
+ * Load item configuration
+ */
+async function loadItemConfig() {
+    try {
+        const baseItems = await loadConfig('config/base/items.json', { weapons: {}, projectiles: {}, collectibles: {} });
+        const customItems = await loadConfig('config/custom/items.json', { weapons: {}, projectiles: {}, collectibles: {} });
+
+        itemConfig = {
+            weapons: { ...(baseItems.weapons || {}), ...(customItems.weapons || {}) },
+            projectiles: { ...(baseItems.projectiles || {}), ...(customItems.projectiles || {}) },
+            collectibles: { ...(baseItems.collectibles || {}), ...(customItems.collectibles || {}) }
+        };
+
+        console.log('Item config loaded:', itemConfig);
+    } catch (error) {
+        console.error('Failed to load item config:', error);
+        itemConfig = { weapons: {}, projectiles: {}, collectibles: {} };
     }
 }
 
@@ -174,23 +277,37 @@ function spawnEnemies() {
 
 class Player {
     constructor(x, y) {
-        // Character definitions
-        this.characters = {
-            sean: {
-                name: 'Sean',
-                images: [seanImage1, seanImage2, seanImage3, seanImage4],
-                width: 108,
-                height: 255
-            },
-            microwaveMan: {
-                name: 'MicrowaveMan',
-                images: [microwaveManImage1, microwaveManImage2, microwaveManImage3, microwaveManImage4],
-                width: 120,
-                height: 120
+        // Load character definitions from config
+        this.characters = {};
+        if (playerConfig && playerConfig.players) {
+            for (const [id, data] of Object.entries(playerConfig.players)) {
+                this.characters[id] = {
+                    name: data.name,
+                    images: data.sprites.map(src => makeImage(src)),
+                    width: data.size.width,
+                    height: data.size.height
+                };
             }
-        };
+        }
 
-        this.currentCharacter = 'sean'; // Start with sean
+        // Fallback to default if no player config loaded
+        if (Object.keys(this.characters).length === 0) {
+            this.characters.default = {
+                name: 'Player',
+                images: [
+                    makeImage('assets/base/characters/player/player-1.png'),
+                    makeImage('assets/base/characters/player/player-2.png'),
+                    makeImage('assets/base/characters/player/player-1.png'),
+                    makeImage('assets/base/characters/player/player-2.png')
+                ],
+                width: 60,
+                height: 60
+            };
+        }
+
+        // Select default character
+        const defaultPlayer = (gameConfig && gameConfig.defaultPlayer) || 'sean';
+        this.currentCharacter = this.characters[defaultPlayer] ? defaultPlayer : Object.keys(this.characters)[0];
         this.loadCharacterAnimations();
 
         this.idle = true;
@@ -207,10 +324,11 @@ class Player {
 
         // Initialize weapons based on config
         this.items = [];
-        if (GAME_CONFIG.weapons.micWeapon) {
+        const weaponConfig = (gameConfig && gameConfig.weapons) || GAME_CONFIG.weapons;
+        if (weaponConfig.micWeapon) {
             this.items.push(new MicWeapon());
         }
-        if (GAME_CONFIG.weapons.discoBallWeapon) {
+        if (weaponConfig.discoBallWeapon) {
             this.items.push(new DiscoBallWeapon());
         }
 
@@ -1227,7 +1345,10 @@ window.addEventListener('load', async () => {
     canvasContainer = document.getElementById('canvas-container');
     context = canvas.getContext('2d');
 
-    // Load character data before starting the game
+    // Load all config files before starting the game
+    await loadGameConfig();
+    await loadPlayerConfig();
+    await loadItemConfig();
     await loadCharacterData();
 
     player = new Player(
