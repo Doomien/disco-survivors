@@ -12,6 +12,7 @@ services:
     volumes:
       # Mount files for live updates (no rebuild needed!)
       - ./characters.json:/usr/share/nginx/html/characters.json
+      - ./config:/usr/share/nginx/html/config
       - ./assets:/usr/share/nginx/html/assets
       - ./game.js:/usr/share/nginx/html/game.js
       - ./tools:/usr/share/nginx/html/tools
@@ -33,12 +34,16 @@ services:
       - NODE_ENV=production
       - PORT=3334
       - CHARACTERS_FILE=/data/characters.json
+      - ENEMIES_CONFIG=/data/config/base/enemies.json
+      - CUSTOM_ENEMIES_CONFIG=/data/config/custom/enemies.json
       - BACKUP_DIR=/data/backups
       - ASSETS_DIR=/data/assets
+      - CONFIG_DIR=/data/config
       - LOG_LEVEL=info
       - CORS_ORIGIN=*
     volumes:
       - ./characters.json:/data/characters.json
+      - ./config:/data/config
       - ./backups:/data/backups
       - ./assets:/data/assets
     restart: unless-stopped
