@@ -1,0 +1,183 @@
+{
+  "enemies": {
+    "skeleton": {
+      "name": "Skeleton",
+      "sprites": [
+        "assets/characters/enemies/skeleton-1.png",
+        "assets/characters/enemies/skeleton-2.png"
+      ],
+      "animation": {
+        "frameTime": 12
+      },
+      "stats": {
+        "health": 3,
+        "speed": 0.4,
+        "attackStrength": 1,
+        "attackSpeed": 500,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 60,
+        "height": 66
+      },
+      "xpValue": 1
+    },
+    "danger_disc": {
+      "name": "Danger Disc",
+      "sprites": [
+        "assets/characters/enemies/001_DangerDiscb.png",
+        "assets/characters/enemies/001_DangerDisc2.png"
+      ],
+      "animation": {
+        "frameTime": 10
+      },
+      "stats": {
+        "health": 4,
+        "speed": 0.5,
+        "attackStrength": 1,
+        "attackSpeed": 450,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 60,
+        "height": 66
+      },
+      "xpValue": 2
+    },
+    "trangle": {
+      "name": "Trangle",
+      "sprites": [
+        "assets/characters/enemies/002_Trangle.png",
+        "assets/characters/enemies/002_Trangle2.png"
+      ],
+      "animation": {
+        "frameTime": 8
+      },
+      "stats": {
+        "health": 2,
+        "speed": 0.5,
+        "attackStrength": 1,
+        "attackSpeed": 400,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 62,
+        "height": 66
+      },
+      "xpValue": 2
+    },
+    "tomato": {
+      "name": "Tomato",
+      "sprites": [
+        "assets/characters/enemies/003_Tomato.png",
+        "assets/characters/enemies/003_Tomato2.png"
+      ],
+      "animation": {
+        "frameTime": 14
+      },
+      "stats": {
+        "health": 5,
+        "speed": 0.3,
+        "attackStrength": 2,
+        "attackSpeed": 600,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 60,
+        "height": 66
+      },
+      "xpValue": 3
+    },
+    "sharp_spiral": {
+      "name": "Sharp Spiral",
+      "sprites": [
+        "assets/characters/enemies/004_TheSharpSpiral.png",
+        "assets/characters/enemies/004_TheSharpSpiral2.png"
+      ],
+      "animation": {
+        "frameTime": 12
+      },
+      "stats": {
+        "health": 6,
+        "speed": 0.6,
+        "attackStrength": 2,
+        "attackSpeed": 500,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 60,
+        "height": 66
+      },
+      "xpValue": 3
+    },
+    "thirteen_legged_monster": {
+      "name": "13-Legged Monster",
+      "sprites": [
+        "assets/characters/enemies/005_13LeggedMonster1.png",
+        "assets/characters/enemies/005_13LeggedMonster2.png",
+        "assets/characters/enemies/005_13LeggedMonster3.png"
+      ],
+      "animation": {
+        "frameTime": 15
+      },
+      "stats": {
+        "health": 8,
+        "speed": 0.35,
+        "attackStrength": 3,
+        "attackSpeed": 700,
+        "attackRange": 50
+      },
+      "size": {
+        "width": 70,
+        "height": 70
+      },
+      "xpValue": 4
+    },
+    "trx": {
+      "name": "TRainbowsaurusRex",
+      "sprites": [
+        "assets/characters/enemies/007_TRainbowsaurusRex.png",
+        "assets/characters/enemies/007_TRainbowsaurusRex2.png",
+        "assets/characters/enemies/007_TRainbowsaurusRex3.png",
+        "assets/characters/enemies/007_TRainbowsaurusRex4.png",
+        "assets/characters/enemies/007_TRainbowsaurusRex5.png"
+      ],
+      "animation": {
+        "frameTime": 6
+      },
+      "stats": {
+        "health": 3,
+        "speed": 0.4,
+        "attackStrength": 1,
+        "attackSpeed": 500,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 128,
+        "height": 103
+      },
+      "xpValue": 1
+    },
+    "skaryteeth": {
+      "name": "Skary Teeth",
+      "sprites": [
+        "assets/characters/enemies/SkaryTeeth_Pixel.png"
+      ],
+      "animation": {
+        "frameTime": 12
+      },
+      "stats": {
+        "health": 2,
+        "speed": 0.5,
+        "attackStrength": 1,
+        "attackSpeed": 500,
+        "attackRange": 37
+      },
+      "size": {
+        "width": 60,
+        "height": 64
+      },
+      "xpValue": 10
+    }
+  }
+}
