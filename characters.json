@@ -161,7 +161,7 @@
     "skaryteeth": {
       "name": "Skary Teeth",
       "sprites": [
-        "assets/characters/enemies/SkaryTeeth-Pixel.png"
+        "assets/characters/enemies/SkaryTeeth_Pixel.png"
       ],
       "animation": {
         "frameTime": 12
