@@ -1,0 +1,25 @@
+{
+  "players": {
+    "example_player_id": {
+      "name": "Example Player Name",
+      "sprites": [
+        "assets/custom/characters/player/example-1.png",
+        "assets/custom/characters/player/example-2.png",
+        "assets/custom/characters/player/example-3.png",
+        "assets/custom/characters/player/example-4.png"
+      ],
+      "animation": {
+        "frameTime": 8
+      },
+      "size": {
+        "width": 60,
+        "height": 60
+      },
+      "stats": {
+        "health": 50,
+        "baseSpeed": 3,
+        "level": 1
+      }
+    }
+  }
+}

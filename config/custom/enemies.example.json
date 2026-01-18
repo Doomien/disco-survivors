@@ -1,0 +1,26 @@
+{
+  "enemies": {
+    "example_enemy_id": {
+      "name": "Example Enemy Name",
+      "sprites": [
+        "assets/custom/characters/enemies/example-1.png",
+        "assets/custom/characters/enemies/example-2.png"
+      ],
+      "animation": {
+        "frameTime": 12
+      },
+      "stats": {
+        "health": 5,
+        "speed": 0.5,
+        "attackStrength": 1,
+        "attackSpeed": 500,
+        "attackRange": 40
+      },
+      "size": {
+        "width": 60,
+        "height": 66
+      },
+      "xpValue": 2
+    }
+  }
+}
