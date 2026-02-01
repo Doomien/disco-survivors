@@ -28,6 +28,21 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+// GET /api/v1/characters/stats - Get character stats (Phase 2)
+// NOTE: Must be before /:id route to avoid being matched as an ID
+router.get('/stats', async (req, res, next) => {
+  try {
+    const stats = await fileService.getCharacterStats();
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/v1/characters/:id - Get character by ID
 router.get('/:id', validateCharacterIdParam, async (req, res, next) => {
   try {
@@ -105,11 +120,46 @@ router.delete('/:id', validateCharacterIdParam, async (req, res, next) => {
       throw new NotFoundError('Character', id);
     }
 
+    // Phase 2: Handle case where base character cannot be deleted
+    if (result.error) {
+      return res.status(403).json({
+        success: false,
+        error: result.error
+      });
+    }
+
     res.json({
       success: true,
       data: {
         id,
         deleted: true
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/v1/characters/:id/source - Get character source (base/custom)
+router.get('/:id/source', validateCharacterIdParam, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const character = await fileService.getCharacter(id);
+
+    if (!character) {
+      throw new NotFoundError('Character', id);
+    }
+
+    const source = fileService.getCharacterSource(id);
+
+    res.json({
+      success: true,
+      data: {
+        id,
+        source,
+        isBase: fileService.isBaseCharacter(id),
+        isCustom: fileService.isCustomCharacter(id),
+        isOverride: fileService.isBaseCharacter(id) && fileService.isCustomCharacter(id)
       }
     });
   } catch (error) {

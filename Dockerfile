@@ -7,7 +7,8 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy game files to nginx html directory
 COPY index.html /usr/share/nginx/html/
 COPY game.js /usr/share/nginx/html/
-COPY characters.json /usr/share/nginx/html/
+# Phase 2: characters.json removed - now using config/base + config/custom
+COPY config/ /usr/share/nginx/html/config/
 COPY assets/ /usr/share/nginx/html/assets/
 COPY tools/ /usr/share/nginx/html/tools/
 COPY docs/ /usr/share/nginx/html/docs/

@@ -134,6 +134,15 @@ const characterDataSchema = Joi.object({
       'number.min': 'XP value must be at least 0',
       'number.max': 'XP value must not exceed 10000',
       'any.required': 'XP value is required'
+    }),
+
+  spawnWeight: Joi.number()
+    .min(0)
+    .max(100)
+    .default(1)
+    .messages({
+      'number.min': 'Spawn weight must be at least 0',
+      'number.max': 'Spawn weight must not exceed 100'
     })
 });
 

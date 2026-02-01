@@ -239,6 +239,51 @@ disco-survivors/
 
 ---
 
+### Phase 4 – Config-Driven Asset Loading (Future)
+
+**Goal:** Make all sprites dynamically load from config instead of being hardcoded
+
+**Status:** Roadmap / Future
+
+**Current Issue:**
+- Sprite paths are currently hardcoded in game.js (e.g., `const ballImage1 = makeImage('assets/items/ball-1.png')`)
+- Items config contains sprite paths, but the game doesn't read them at runtime
+- This means editing sprite paths in the web editor doesn't change what displays in-game
+
+**Tasks (outline):**
+
+- [ ] **4.1** Create dynamic asset loader
+  - Implement `loadAsset(path)` function that loads images on-demand
+  - Add caching to prevent duplicate loads
+  - Add fallback logic (try custom path first, fall back to base)
+
+- [ ] **4.2** Refactor entity classes to use config sprites
+  - Update RadialProjectilePickup, CandyPickup, etc. to read sprite from config
+  - Update Enemy class to load sprites based on character data
+  - Update Item/Weapon classes to use config sprite paths
+
+- [ ] **4.3** Remove hardcoded sprite constants
+  - Replace top-of-file image constants with dynamic loading
+  - Keep only essential sprites (player, floor) as constants
+
+- [ ] **4.4** Add asset loading logging
+  - Log when assets fail to load
+  - Show clear errors for missing sprites
+
+- [ ] **4.5** Fix Docker build caching for game files
+  - Add volume mount for `game.js` to avoid rebuild on code changes
+  - Verify all game source files are mounted (currently only config/assets/tools are mounted)
+  - Test that changes to game.js reflect immediately without `docker compose build`
+
+**Recent Workaround (2026-02-01):**
+- Added hardcoded `multitoolImage` constant for RadialProjectilePickup and RadialProjectile
+- This is a temporary fix until full config-driven asset loading is implemented
+- Both the pickup and projectiles now correctly show Multitool instead of disco ball
+
+**Note:** This phase would make the editor more powerful, allowing sprite changes without code edits. However, it requires careful refactoring to avoid breaking existing functionality.
+
+---
+
 ## 4. Migration Checklist
 
 ### Files to Create

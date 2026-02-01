@@ -7,12 +7,13 @@ const logger = require('../utils/logger');
 const { ValidationError } = require('../utils/errors');
 
 // Configure multer storage
+// Phase 2: Upload to custom assets directory (gitignored)
 const ASSETS_DIR = process.env.ASSETS_DIR || path.join(__dirname, '../../../assets');
-const UPLOAD_SUBDIR = 'characters/enemies'; // Where character sprites go
+const CUSTOM_SUBDIR = 'custom/characters/enemies'; // Phase 2: Upload to custom directory
 
 // Ensure upload directory exists
 async function ensureUploadDir() {
-  const uploadPath = path.join(ASSETS_DIR, UPLOAD_SUBDIR);
+  const uploadPath = path.join(ASSETS_DIR, CUSTOM_SUBDIR);
   try {
     await fs.mkdir(uploadPath, { recursive: true });
   } catch (error) {
@@ -23,7 +24,7 @@ async function ensureUploadDir() {
 // Multer configuration
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const uploadPath = path.join(ASSETS_DIR, UPLOAD_SUBDIR);
+    const uploadPath = path.join(ASSETS_DIR, CUSTOM_SUBDIR);
     await ensureUploadDir();
     cb(null, uploadPath);
   },
@@ -73,8 +74,9 @@ router.post('/character-sprite', upload.single('sprite'), async (req, res, next)
       throw new ValidationError('No file uploaded');
     }
 
-    // Return the relative path that can be used in characters.json
-    const relativePath = `assets/${UPLOAD_SUBDIR}/${req.file.filename}`;
+    // Return the relative path that can be used in enemies.json
+    // Phase 2: Path now points to custom assets directory
+    const relativePath = `assets/${CUSTOM_SUBDIR}/${req.file.filename}`;
 
     logger.info(`Uploaded sprite: ${relativePath}`);
 
@@ -111,7 +113,7 @@ router.post('/character-sprites', upload.array('sprites', 20), async (req, res, 
     const uploadedFiles = req.files.map(file => ({
       filename: file.filename,
       originalName: file.originalname,
-      path: `assets/${UPLOAD_SUBDIR}/${file.filename}`,
+      path: `assets/${CUSTOM_SUBDIR}/${file.filename}`,
       size: file.size,
       mimeType: file.mimetype
     }));
@@ -140,10 +142,10 @@ router.post('/character-sprites', upload.array('sprites', 20), async (req, res, 
   }
 });
 
-// GET /api/v1/uploads/list - List available sprite files
+// GET /api/v1/uploads/list - List available sprite files in custom directory
 router.get('/list', async (req, res, next) => {
   try {
-    const uploadPath = path.join(ASSETS_DIR, UPLOAD_SUBDIR);
+    const uploadPath = path.join(ASSETS_DIR, CUSTOM_SUBDIR);
     await ensureUploadDir();
 
     const files = await fs.readdir(uploadPath);
@@ -151,7 +153,7 @@ router.get('/list', async (req, res, next) => {
       .filter(file => /\.(jpg|jpeg|png|gif)$/i.test(file))
       .map(file => ({
         filename: file,
-        path: `assets/${UPLOAD_SUBDIR}/${file}`
+        path: `assets/${CUSTOM_SUBDIR}/${file}`
       }));
 
     res.json({

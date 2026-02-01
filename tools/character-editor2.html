@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Disco Survivors - Character Editor (API)</title>
+    <title>Disco Survivors - Content Editor (API)</title>
     <style>
         * {
             margin: 0;
@@ -63,7 +63,76 @@
             color: white;
         }
 
-        .main-content {
+        /* Main Tabs */
+        .main-tabs {
+            display: flex;
+            background: #1a202c;
+            border-bottom: 2px solid #4a5568;
+        }
+
+        .main-tab {
+            padding: 15px 30px;
+            background: transparent;
+            border: none;
+            color: #a0aec0;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .main-tab:hover {
+            color: #e2e8f0;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .main-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        /* Sub Tabs */
+        .sub-tabs {
+            display: flex;
+            background: #2d3748;
+            padding: 10px;
+            gap: 8px;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .sub-tab {
+            padding: 8px 16px;
+            background: #1a202c;
+            border: 1px solid #4a5568;
+            border-radius: 6px;
+            color: #a0aec0;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sub-tab:hover {
+            background: #4a5568;
+            color: #e2e8f0;
+        }
+
+        .sub-tab.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }        .main-content {
             display: grid;
             grid-template-columns: 300px 1fr;
             gap: 0;
@@ -80,7 +149,8 @@
             margin-top: 20px;
         }
 
-        .character-item {
+        .character-item,
+        .item-item {
             background: #2d3748;
             padding: 12px 16px;
             margin-bottom: 8px;
@@ -93,24 +163,57 @@
             align-items: center;
         }
 
-        .character-item:hover {
+        .character-item:hover,
+        .item-item:hover {
             border-color: #667eea;
             transform: translateX(4px);
         }
 
-        .character-item.active {
+        .character-item.active,
+        .character-item.selected,
+        .item-item.active,
+        .item-item.selected {
             background: #667eea;
             color: white;
             border-color: #667eea;
         }
 
-        .character-item .char-name {
+        .character-item .char-name,
+        .item-item .item-name {
             font-weight: 600;
         }
 
         .character-item .char-id {
             font-size: 0.85em;
             opacity: 0.7;
+        }
+
+        /* Source badges (shared) */
+        .char-badge,
+        .badge {
+            display: inline-block;
+            font-size: 0.65em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+
+        .badge-base {
+            background: #4a5568;
+            color: #a0aec0;
+        }
+
+        .badge-custom {
+            background: #48bb78;
+            color: white;
+        }
+
+        .badge-override {
+            background: #ed8936;
+            color: white;
         }
 
         .btn {
@@ -187,6 +290,20 @@
         .editor-panel {
             padding: 30px;
             background: #2d3748;
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #4a5568;
+        }
+
+        .editor-header h2 {
+            color: #e2e8f0;
+            margin: 0;
         }
 
         .editor-empty {
@@ -302,7 +419,8 @@
             transition: opacity 0.2s;
         }
 
-        .character-item:hover .delete-btn {
+        .character-item:hover .delete-btn,
+        .item-item:hover .delete-btn {
             opacity: 1;
         }
 
@@ -374,30 +492,66 @@
     <div class="container">
         <header>
             <h1>Disco Survivors</h1>
-            <div class="subtitle">Character Editor (API-Based)</div>
+            <div class="subtitle">Content Editor • Base + Custom Support</div>
             <div id="apiStatus" class="api-status disconnected">API Disconnected</div>
         </header>
 
-        <div class="main-content">
-            <aside class="sidebar">
-                <button class="btn btn-primary btn-block" onclick="createNewCharacter()" id="newCharBtn">+ New Character</button>
-                <button class="btn btn-secondary btn-block" onclick="refreshCharacters()" id="refreshBtn">🔄 Refresh</button>
+        <!-- Main Tabs -->
+        <div class="main-tabs">
+            <button class="main-tab active" onclick="switchMainTab('characters')" id="charactersTab">👾 Characters</button>
+            <button class="main-tab" onclick="switchMainTab('items')" id="itemsTab">⚔️ Items</button>
+        </div>
 
-                <div class="character-list" id="characterList">
-                    <div style="text-align: center; padding: 20px; color: #a0aec0;">
-                        <div class="loading"></div>
-                        <div style="margin-top: 10px;">Loading...</div>
+        <!-- Characters Tab Content -->
+        <div id="charactersContent" class="tab-content active">
+            <div class="main-content">
+                <aside class="sidebar">
+                    <button class="btn btn-primary btn-block" onclick="createNewCharacter()" id="newCharBtn">+ New Character</button>
+                    <button class="btn btn-secondary btn-block" onclick="refreshCharacters()" id="refreshBtn">🔄 Refresh</button>
+
+                    <div class="character-list" id="characterList">
+                        <div style="text-align: center; padding: 20px; color: #a0aec0;">
+                            <div class="loading"></div>
+                            <div style="margin-top: 10px;">Loading...</div>
+                        </div>
                     </div>
-                </div>
-            </aside>
+                </aside>
 
-            <main class="editor-panel">
-                <div id="editorContent" class="editor-empty">
-                    <h2>Welcome to the API Character Editor</h2>
-                    <p>Select a character from the list or create a new one to get started.</p>
-                    <p style="margin-top: 10px; font-size: 0.9em; color: #718096;">All changes are saved directly to the server via API.</p>
-                </div>
-            </main>
+                <main class="editor-panel">
+                    <div id="editorContent" class="editor-empty">
+                        <h2>Welcome to the Content Editor</h2>
+                        <p>Select a character from the list or create a new one to get started.</p>
+                        <p style="margin-top: 10px; font-size: 0.9em; color: #718096;">All changes are saved directly to the server via API.</p>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <!-- Items Tab Content -->
+        <div id="itemsContent" class="tab-content">
+            <div class="sub-tabs" id="itemSubTabs">
+                <!-- Sub-tabs rendered by JS -->
+            </div>
+            <div class="main-content">
+                <aside class="sidebar">
+                    <button class="btn btn-primary btn-block" onclick="createNewItem()" id="newItemBtn">+ New Item</button>
+                    <button class="btn btn-secondary btn-block" onclick="refreshItems()" id="refreshItemsBtn">🔄 Refresh</button>
+
+                    <div class="character-list" id="itemList">
+                        <div style="text-align: center; padding: 20px; color: #a0aec0;">
+                            <div class="loading"></div>
+                            <div style="margin-top: 10px;">Loading items...</div>
+                        </div>
+                    </div>
+                </aside>
+
+                <main class="editor-panel">
+                    <div id="itemEditorContent" class="editor-empty">
+                        <h2>Item Editor</h2>
+                        <p>Select an item from the list or create a new one.</p>
+                    </div>
+                </main>
+            </div>
         </div>
     </div>
 
@@ -426,5 +580,29 @@
     </div>
 
     <script src="character-editor2.js"></script>
+    <script src="item-editor.js"></script>
+    <script>
+        // Tab switching logic
+        let currentMainTab = 'characters';
+        let itemsInitialized = false;
+
+        function switchMainTab(tab) {
+            currentMainTab = tab;
+            
+            // Update tab buttons
+            document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab + 'Tab').classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tab + 'Content').classList.add('active');
+            
+            // Initialize items editor on first switch
+            if (tab === 'items' && !itemsInitialized) {
+                itemsInitialized = true;
+                initItemsEditor();
+            }
+        }
+    </script>
 </body>
 </html>

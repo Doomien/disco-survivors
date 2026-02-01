@@ -18,9 +18,19 @@ const ENEMY_SPAWN_TIME_BETWEEN_WAVES = 5000; // ms
 const GAME_CONFIG = {
     weapons: {
         micWeapon: true,        // Microphone weapon
-        discoBallWeapon: false  // Disco ball weapon (disabled)
+        discoBallWeapon: false, // Disco ball weapon (disabled)
+        radialProjectileWeapon: false  // Radial projectile weapon (dropped by enemies)
     }
 };
+
+// Drop table configuration - weights determine relative drop chance
+// Higher weight = more common drop
+const DROP_TABLE = [
+    { type: 'candy', weight: 80 },           // XP drop - most common
+    { type: 'regularFlower', weight: 10 },   // Speed boost
+    { type: 'electrifiedSword', weight: 5 }, // Sword weapon pickup
+    { type: 'radialProjectile', weight: 5 }  // Radial projectile weapon pickup
+];
 
 // Player character images
 // Sean character (Character 1)
@@ -47,6 +57,7 @@ const regularFlowerImage = makeImage('assets/items/RegularFlower.png');
 const electrifiedSwordImage1 = makeImage('assets/characters/enemies/006_ElectrifiedSword.png');
 const electrifiedSwordImage2 = makeImage('assets/characters/enemies/006_ElectrifiedSword2.png');
 const electrifiedSwordImage3 = makeImage('assets/characters/enemies/006_ElectrifiedSword3.png');
+const multitoolImage = makeImage('assets/custom/items/Multitool-small.png');
 const floorImage = makeImage('assets/environment/Zelda-Style-Test.png');
 
 const gameRunning = true;
@@ -226,10 +237,68 @@ async function loadItemConfig() {
 
 /**
  * Get a random enemy type from available character definitions
+ * Uses weighted selection based on spawnWeight (default: 1)
  */
 function getRandomEnemyType() {
-    const enemyTypes = Object.keys(characterData.enemies);
-    return enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+    const enemies = characterData.enemies;
+    const enemyTypes = Object.keys(enemies);
+    
+    // Build weighted array
+    const weights = enemyTypes.map(type => enemies[type].spawnWeight || 1);
+    const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+    
+    // Select random enemy based on weight
+    let random = Math.random() * totalWeight;
+    for (let i = 0; i < enemyTypes.length; i++) {
+        random -= weights[i];
+        if (random <= 0) {
+            return enemyTypes[i];
+        }
+    }
+    
+    // Fallback (shouldn't reach here)
+    return enemyTypes[enemyTypes.length - 1];
+}
+
+/**
+ * Get a random drop type based on weighted drop table
+ * Returns the type string (e.g., 'candy', 'electrifiedSword')
+ */
+function getRandomDropType() {
+    const totalWeight = DROP_TABLE.reduce((sum, item) => sum + item.weight, 0);
+    
+    let random = Math.random() * totalWeight;
+    for (const drop of DROP_TABLE) {
+        random -= drop.weight;
+        if (random <= 0) {
+            return drop.type;
+        }
+    }
+    
+    // Fallback to candy
+    return 'candy';
+}
+
+/**
+ * Spawn a drop item at the given position based on type
+ */
+function spawnDrop(x, y, type) {
+    switch (type) {
+        case 'candy':
+            objects.push(new Candy(x, y));
+            break;
+        case 'regularFlower':
+            objects.push(new RegularFlower(x, y));
+            break;
+        case 'electrifiedSword':
+            objects.push(new ElectrifiedSword(x, y));
+            break;
+        case 'radialProjectile':
+            objects.push(new RadialProjectilePickup(x, y));
+            break;
+        default:
+            objects.push(new Candy(x, y));
+    }
 }
 
 /**
@@ -330,6 +399,9 @@ class Player {
         }
         if (weaponConfig.discoBallWeapon) {
             this.items.push(new DiscoBallWeapon());
+        }
+        if (weaponConfig.radialProjectileWeapon) {
+            this.items.push(new RadialProjectileWeapon());
         }
 
         this.xp = 0;
@@ -587,16 +659,9 @@ class Enemy {
         this.destroyed = true;
         enemiesDestroyed += 1;
 
-        // Drop item with weighted chances:
-        // 5% Electrified Sword, 10% Regular Flower, 85% Candy
-        const dropRoll = Math.random();
-        if (dropRoll < 0.05) {
-            objects.push(new ElectrifiedSword(this.x, this.y));
-        } else if (dropRoll < 0.15) {
-            objects.push(new RegularFlower(this.x, this.y));
-        } else {
-            objects.push(new Candy(this.x, this.y));
-        }
+        // Drop item using weighted drop table
+        const dropType = getRandomDropType();
+        spawnDrop(this.x, this.y, dropType);
     }
 }
 
@@ -736,6 +801,57 @@ class ElectrifiedSword {
         this.destroy();
         // Add the Electrified Sword weapon to the player
         player.items.push(new ElectrifiedSwordWeapon());
+    }
+
+    destroy() {
+        if (this.destroyed) return;
+        this.destroyed = true;
+    }
+}
+
+/**
+ * RadialProjectilePickup - Dropped item that gives player the radial projectile weapon
+ */
+class RadialProjectilePickup {
+    constructor(x, y) {
+        // Use multitool sprite for the radial projectile pickup
+        this.image = multitoolImage;
+        this.x = x;
+        this.y = y;
+        this.width = 40;
+        this.height = 40;
+        this.attractRadius = 200;
+        this.pickupRadius = 50;
+    }
+
+    update() {
+        if (this.destroyed) return;
+
+        if (pointInCircle(this.x, this.y, player.x, player.y, this.pickupRadius)) {
+            this.pickup();
+            return;
+        }
+
+        if (pointInCircle(this.x, this.y, player.x, player.y, this.attractRadius)) {
+            this.x = lerp(this.x, player.x, 0.1);
+            this.y = lerp(this.y, player.y, 0.1);
+        }
+    }
+
+    draw() {
+        context.drawImage(
+            this.image,
+            this.x - this.width / 2,
+            this.y - this.height / 2,
+            this.width, this.height
+        );
+    }
+
+    pickup() {
+        if (this.destroyed) return;
+        this.destroy();
+        // Add the Radial Projectile weapon to the player
+        player.items.push(new RadialProjectileWeapon());
     }
 
     destroy() {
@@ -1026,6 +1142,115 @@ class ElectrifiedSwordWeapon extends Weapon {
             this.width, this.height
         );
         context.restore();
+    }
+}
+
+/**
+ * RadialProjectile - A single projectile that travels in one direction
+ * Destroys itself when hitting an enemy
+ */
+class RadialProjectile {
+    constructor(x, y, angle, speed, attackStrength, size) {
+        this.x = x;
+        this.y = y;
+        this.angle = angle;
+        this.speed = speed;
+        this.attackStrength = attackStrength;
+        this.width = size.width;
+        this.height = size.height;
+        this.destroyed = false;
+        this.maxDistance = 800; // Max travel distance before despawning
+        this.distanceTraveled = 0;
+        
+        // Calculate velocity components
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        
+        // Use multitool sprite for projectiles
+        this.image = multitoolImage;
+        this.rotation = 0; // For spinning effect
+    }
+
+    update() {
+        // Move projectile
+        this.x += this.vx;
+        this.y += this.vy;
+        this.distanceTraveled += this.speed;
+        
+        // Spin the sprite
+        this.rotation += 0.15;
+        
+        // Check if traveled too far
+        if (this.distanceTraveled > this.maxDistance) {
+            this.destroyed = true;
+            return;
+        }
+        
+        // Check collision with enemies
+        for (const object of objects) {
+            if (object instanceof Enemy) {
+                const dx = this.x - object.x;
+                const dy = this.y - object.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 40) { // Hit radius
+                    object.hit(this.attackStrength);
+                    this.destroyed = true;
+                    return;
+                }
+            }
+        }
+    }
+
+    draw() {
+        context.save();
+        context.translate(this.x, this.y);
+        context.rotate(this.rotation);
+        context.drawImage(
+            this.image,
+            -this.width / 2, -this.height / 2,
+            this.width, this.height
+        );
+        context.restore();
+    }
+}
+
+/**
+ * RadialProjectileWeapon - Fires 8 projectiles outward from player in all directions
+ */
+class RadialProjectileWeapon extends Weapon {
+    constructor() {
+        const attackSpeed = 5000; // ms between attacks
+        const attackAnimationFrames = 5;
+        const attackStrength = 1;
+        super(attackSpeed, attackAnimationFrames, attackStrength);
+        this.projectileSpeed = 2;
+        this.projectileSize = { width: 30, height: 30 };
+        this.directions = 8; // Number of projectiles (8 = cardinal + diagonal)
+    }
+
+    update() {
+        super.update();
+        
+        if (this.firstAttackFrame()) {
+            // Spawn 8 projectiles in radial pattern
+            for (let i = 0; i < this.directions; i++) {
+                const angle = (i / this.directions) * (2 * Math.PI);
+                const projectile = new RadialProjectile(
+                    player.x,
+                    player.y,
+                    angle,
+                    this.projectileSpeed,
+                    this.attackStrength,
+                    this.projectileSize
+                );
+                objects.push(projectile);
+            }
+        }
+    }
+
+    draw() {
+        // Weapon itself has no visual, only its projectiles do
     }
 }
 

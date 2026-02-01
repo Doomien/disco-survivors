@@ -19,6 +19,17 @@
       "attackStrength": 1,
       "level": 8,
       "radius": 100
+    },
+    "radialProjectileWeapon": {
+      "name": "Radial Projectile",
+      "enabled": true,
+      "type": "weapon",
+      "attackSpeed": 5000,
+      "attackAnimationFrames": 5,
+      "attackStrength": 1,
+      "projectileSpeed": 2,
+      "directions": 8,
+      "projectile": "radialBullet"
     }
   },
   "projectiles": {
@@ -37,6 +48,23 @@
         "width": 60,
         "height": 60
       }
+    },
+    "radialBullet": {
+      "name": "Radial Bullet",
+      "sprites": [
+        "assets/base/items/ball-1.png",
+        "assets/base/items/ball-2.png"
+      ],
+      "animation": {
+        "frameTime": 8
+      },
+      "speed": 2,
+      "attackStrength": 1,
+      "maxDistance": 800,
+      "size": {
+        "width": 30,
+        "height": 30
+      }
     }
   },
   "collectibles": {
@@ -46,7 +74,39 @@
       "droppedSprite": "assets/base/items/candy-dropped.png",
       "attractRadius": 200,
       "pickupRadius": 50,
-      "xpValue": 1
+      "xpValue": 1,
+      "dropWeight": 80
+    },
+    "regularFlower": {
+      "name": "Regular Flower",
+      "sprite": "assets/base/items/RegularFlower.png",
+      "attractRadius": 200,
+      "pickupRadius": 50,
+      "effect": "speedBoost",
+      "dropWeight": 10
+    },
+    "electrifiedSword": {
+      "name": "Electrified Sword",
+      "sprites": [
+        "assets/base/characters/enemies/006_ElectrifiedSword.png",
+        "assets/base/characters/enemies/006_ElectrifiedSword2.png",
+        "assets/base/characters/enemies/006_ElectrifiedSword3.png"
+      ],
+      "attractRadius": 200,
+      "pickupRadius": 50,
+      "grantsWeapon": "electrifiedSwordWeapon",
+      "dropWeight": 5
+    },
+    "radialProjectilePickup": {
+      "name": "Radial Projectile Pickup",
+      "sprites": [
+        "assets/base/items/ball-1.png",
+        "assets/base/items/ball-2.png"
+      ],
+      "attractRadius": 200,
+      "pickupRadius": 50,
+      "grantsWeapon": "radialProjectileWeapon",
+      "dropWeight": 5
     }
   }
 }

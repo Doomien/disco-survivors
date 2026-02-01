@@ -20,7 +20,8 @@
         "width": 60,
         "height": 66
       },
-      "xpValue": 1
+      "xpValue": 1,
+      "spawnWeight": 1
     }
   }
 }

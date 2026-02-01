@@ -8,6 +8,7 @@ const API_BASE_URL = '/api/v1';
 
 // State
 let characters = {};
+let characterSources = {}; // Phase 2: Track which characters are base vs custom
 let currentEditingCharacterId = null;
 let spriteInputs = [];
 let isApiConnected = false;
@@ -69,6 +70,17 @@ async function loadCharacters() {
     try {
         const response = await apiRequest('/characters');
         characters = response.data || {};
+        
+        // Phase 2: Fetch source info for all characters
+        characterSources = {};
+        const sourcePromises = Object.keys(characters).map(async (id) => {
+            const source = await getCharacterSource(id);
+            if (source) {
+                characterSources[id] = source;
+            }
+        });
+        await Promise.all(sourcePromises);
+        
         return characters;
     } catch (error) {
         throw new Error(`Failed to load characters: ${error.message}`);
@@ -110,12 +122,38 @@ async function updateCharacter(id, data) {
 
 async function deleteCharacterAPI(id) {
     try {
-        await apiRequest(`/characters/${id}`, {
+        const response = await apiRequest(`/characters/${id}`, {
             method: 'DELETE'
         });
-        return true;
+        return { success: true };
     } catch (error) {
+        // Check if it's a base character deletion error
+        if (error.message.includes('base character')) {
+            return { success: false, isBaseCharacter: true, error: error.message };
+        }
         throw new Error(`Failed to delete character: ${error.message}`);
+    }
+}
+
+// Phase 2: Get character source (base vs custom)
+async function getCharacterSource(id) {
+    try {
+        const response = await apiRequest(`/characters/${id}/source`);
+        return response.data;
+    } catch (error) {
+        console.warn(`Could not get source for ${id}:`, error.message);
+        return null;
+    }
+}
+
+// Phase 2: Get character stats (counts)
+async function getCharacterStats() {
+    try {
+        const response = await apiRequest('/characters/stats');
+        return response.data;
+    } catch (error) {
+        console.warn('Could not get character stats:', error.message);
+        return null;
     }
 }
 
@@ -174,13 +212,20 @@ function renderCharacterList() {
     let html = '';
     for (const [id, character] of Object.entries(characters)) {
         const isActive = id === currentEditingCharacterId ? 'active' : '';
+        const source = characterSources[id];
+        const isBase = source?.isBase && !source?.isCustom;
+        const isOverride = source?.isOverride;
+        const badgeClass = isBase ? 'badge-base' : (isOverride ? 'badge-override' : 'badge-custom');
+        const badgeText = isBase ? 'BASE' : (isOverride ? 'OVERRIDE' : 'CUSTOM');
+        const canDelete = !isBase; // Can only delete custom characters or overrides
+        
         html += `
             <div class="character-item ${isActive}" onclick="selectCharacter('${id}')">
                 <div>
-                    <div class="char-name">${escapeHtml(character.name)}</div>
+                    <div class="char-name">${escapeHtml(character.name)} <span class="char-badge ${badgeClass}">${badgeText}</span></div>
                     <div class="char-id">${escapeHtml(id)}</div>
                 </div>
-                <button class="btn btn-danger btn-small delete-btn" onclick="deleteCharacter(event, '${id}')">×</button>
+                ${canDelete ? `<button class="btn btn-danger btn-small delete-btn" onclick="deleteCharacter(event, '${id}')">×</button>` : ''}
             </div>
         `;
     }
@@ -231,15 +276,28 @@ function renderEditorForm(characterId, character) {
         spriteInputs = [''];
     }
 
+    // Phase 2: Get source info for display
+    const source = characterSources[characterId];
+    const isBase = source?.isBase && !source?.isCustom;
+    const isOverride = source?.isOverride;
+    const sourceLabel = isBase ? 'Base Character (read-only)' : 
+                        isOverride ? 'Custom Override (editable)' : 
+                        'Custom Character (editable)';
+    const sourceClass = isBase ? 'badge-base' : (isOverride ? 'badge-override' : 'badge-custom');
+
     const editorContent = document.getElementById('editorContent');
     editorContent.className = '';
     editorContent.innerHTML = `
         <div id="messageContainer"></div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <h2 style="color: #e2e8f0;">Edit Character: ${escapeHtml(character.name)}</h2>
+            <div>
+                <h2 style="color: #e2e8f0; margin-bottom: 5px;">Edit Character: ${escapeHtml(character.name)}</h2>
+                <span class="char-badge ${sourceClass}" style="font-size: 0.8em;">${sourceLabel}</span>
+            </div>
             <button class="btn btn-success" onclick="saveCharacter()" id="saveBtn">💾 Save Changes</button>
         </div>
+        ${isBase ? '<div class="info-message" style="margin-bottom: 20px;">ℹ️ This is a base character. Saving will create a custom override.</div>' : ''}
 
         <form onsubmit="event.preventDefault(); saveCharacter();" id="characterForm">
             <!-- Basic Info -->
@@ -342,6 +400,16 @@ function renderEditorForm(characterId, character) {
                     <div class="helper-text">Experience points dropped when defeated (0-10000)</div>
                 </div>
             </div>
+
+            <!-- Spawn Settings -->
+            <div class="form-section">
+                <h3>Spawn Settings</h3>
+                <div class="form-group">
+                    <label>Spawn Weight</label>
+                    <input type="number" id="spawnWeight" value="${character.spawnWeight || 1}" min="0" max="100" step="0.1">
+                    <div class="helper-text">Higher = spawns more often. 0 = never spawns. Default is 1. (e.g., weight 2 spawns twice as often as weight 1)</div>
+                </div>
+            </div>
         </form>
     `;
 
@@ -357,7 +425,7 @@ function renderSpriteInputs() {
             <input type="text"
                    value="${escapeHtml(sprite)}"
                    onchange="updateSpriteInput(${index}, this.value)"
-                   placeholder="assets/characters/enemies/sprite-${index + 1}.png"
+                   placeholder="assets/custom/characters/enemies/sprite-${index + 1}.png"
                    maxlength="200">
             ${spriteInputs.length > 1 ? `<button type="button" class="btn btn-danger btn-small" onclick="removeSpriteInput(${index})">×</button>` : ''}
         </div>
@@ -408,7 +476,8 @@ function gatherFormData() {
             width: parseInt(getName('width').value),
             height: parseInt(getName('height').value)
         },
-        xpValue: parseInt(getName('xpValue').value)
+        xpValue: parseInt(getName('xpValue').value),
+        spawnWeight: parseFloat(getName('spawnWeight').value) || 1
     };
 
     return data;
@@ -447,8 +516,24 @@ async function saveCharacter() {
     try {
         await updateCharacter(currentEditingCharacterId, character);
         characters[currentEditingCharacterId] = character;
-        showMessage('✓ Character saved successfully! Changes are live.', 'success');
+        
+        // Phase 2: Refresh source info and show appropriate message
+        const wasBase = characterSources[currentEditingCharacterId]?.isBase && !characterSources[currentEditingCharacterId]?.isCustom;
+        const newSource = await getCharacterSource(currentEditingCharacterId);
+        if (newSource) {
+            characterSources[currentEditingCharacterId] = newSource;
+            
+            if (wasBase && newSource.isOverride) {
+                showMessage('✓ Character saved! A custom override has been created.', 'success');
+            } else {
+                showMessage('✓ Character saved successfully! Changes are live.', 'success');
+            }
+        } else {
+            showMessage('✓ Character saved successfully! Changes are live.', 'success');
+        }
+        
         renderCharacterList();
+        renderEditorForm(currentEditingCharacterId, character);
     } catch (error) {
         showMessage(`Failed to save: ${error.message}`, 'error');
     } finally {
@@ -519,9 +604,10 @@ async function confirmNewCharacter() {
     }
 
     // Create new character with default values
+    // Phase 2: New characters save to custom directory
     const newCharacter = {
         name: name,
-        sprites: ['assets/characters/enemies/sprite.png'],
+        sprites: ['assets/custom/characters/enemies/sprite.png'],
         animation: {
             frameTime: 12
         },
@@ -536,7 +622,8 @@ async function confirmNewCharacter() {
             width: 60,
             height: 66
         },
-        xpValue: 1
+        xpValue: 1,
+        spawnWeight: 1
     };
 
     // Show loading state
@@ -563,13 +650,30 @@ async function deleteCharacter(event, characterId) {
     event.stopPropagation();
 
     const character = characters[characterId];
-    if (!confirm(`Are you sure you want to delete "${character.name}"?\n\nThis will permanently delete the character from the server.`)) {
+    const source = characterSources[characterId];
+    
+    // Phase 2: Check if this is a base character
+    if (source?.isBase && !source?.isCustom) {
+        showMessage('❌ Cannot delete base characters. Only custom characters can be deleted.', 'error');
+        return;
+    }
+    
+    const deleteType = source?.isOverride ? 'override (base character will be restored)' : 'character';
+    if (!confirm(`Are you sure you want to delete "${character.name}"?\n\nThis will permanently delete the ${deleteType} from the server.`)) {
         return;
     }
 
     try {
-        await deleteCharacterAPI(characterId);
+        const result = await deleteCharacterAPI(characterId);
+        
+        // Handle base character protection from API
+        if (!result.success && result.isBaseCharacter) {
+            showMessage('❌ Cannot delete base characters. Only custom characters can be deleted.', 'error');
+            return;
+        }
+        
         delete characters[characterId];
+        delete characterSources[characterId];
 
         if (currentEditingCharacterId === characterId) {
             currentEditingCharacterId = null;

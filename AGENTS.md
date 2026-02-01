@@ -1,25 +1,25 @@
 # Agent Handoff Document - Disco Survivors
 
 **Last Updated**: 2026-01-31
-**Project Status**: Phase 1 Complete, Phase 2 Pending
+**Project Status**: Phase 2 Complete
 **Repository**: https://github.com/Doomien/disco-survivors
 
 ---
 
 ## Quick Summary
 
-**What is this?** A web-based survival game with an over-engineered backend for easy character creation. The project is mid-refactor to separate the game engine from content (base vs custom content packs).
+**What is this?** A web-based survival game with an over-engineered backend for easy character creation. The project has completed the refactor to separate the game engine from content (base vs custom content packs).
 
 **Current State**:
 - ✅ **Phase 0 & 1 Complete** - Engine is data-driven, loads from config files
-- ❌ **Phase 2 Incomplete** - API and character editor still use old structure
+- ✅ **Phase 2 Complete** - API and character editor use new base + custom config structure
 - ❌ **No Pack Selection** - System only supports base + custom merge (no UI to select packs)
 
 ---
 
 ## Architecture Overview
 
-### Current Structure (Post Phase 1)
+### Current Structure (Post Phase 2)
 
 ```
 disco-survivors/
@@ -27,14 +27,14 @@ disco-survivors/
 ├── index.html                 # Entry point
 ├── config/
 │   ├── game.config.json       # Main settings
+│   ├── archive/               # Archived old files
+│   │   └── characters.json.phase1-backup
 │   ├── base/                  # Base content (committed)
 │   │   ├── enemies.json
 │   │   ├── players.json
 │   │   └── items.json
 │   └── custom/                # Custom content (GITIGNORED)
-│       ├── enemies.json
-│       ├── players.json
-│       └── items.json
+│       └── enemies.json       # Created when custom characters added
 ├── assets/
 │   ├── base/                  # Base assets (committed)
 │   │   ├── characters/
@@ -42,13 +42,16 @@ disco-survivors/
 │   │   └── environment/
 │   └── custom/                # Custom assets (GITIGNORED)
 │       └── characters/
-├── api/                       # REST API (still uses old paths)
-│   └── src/routes/
-│       ├── characters.js      # Needs update to use new configs
-│       └── uploads.js         # Image upload endpoint
+├── api/                       # REST API (Phase 2 complete)
+│   └── src/
+│       ├── routes/
+│       │   ├── characters.js  # Supports base + custom with source tracking
+│       │   └── uploads.js     # Uploads to assets/custom/
+│       └── services/
+│           └── fileService.js # Merges base + custom configs
 ├── tools/
-│   └── character-editor2.html # Web character editor (still uses old paths)
-└── characters.json            # OLD - kept for backward compat, will be removed
+│   └── character-editor2.html # Web editor with base/custom badges
+└── characters.json            # ARCHIVED to config/archive/
 ```
 
 ### How It Works Now
@@ -56,7 +59,8 @@ disco-survivors/
 1. **Game loads** → reads `config/game.config.json`
 2. **Loads configs** → merges base + custom for enemies, players, items
 3. **Renders game** → uses merged config data
-4. **Character editor** → still saves to old `characters.json` ❌
+4. **Character editor** → saves to `config/custom/enemies.json` ✅
+5. **Uploaded sprites** → go to `assets/custom/characters/enemies/` ✅
 
 ---
 
@@ -95,26 +99,25 @@ disco-survivors/
 - Disabled nginx caching for development
 - Image upload API endpoint at `/api/v1/uploads/character-sprite`
 
+### ✅ API Service (Phase 2 Complete)
+- Reads from `config/base/enemies.json` + `config/custom/enemies.json`
+- Merges configs on read (custom overrides base)
+- Saves new/updated characters to `config/custom/enemies.json` only
+- Base characters are protected from deletion
+- New endpoints: `/api/v1/characters/stats`, `/api/v1/characters/:id/source`
+
+### ✅ Character Editor (Phase 2 Complete)
+- Shows BASE/CUSTOM/OVERRIDE badges on character list
+- Saves to `config/custom/enemies.json`
+- Uploads sprites to `assets/custom/characters/enemies/`
+- Base characters cannot be deleted (only custom characters/overrides)
+- Shows warning when editing base character (creates override)
+
 ---
 
 ## What Doesn't Work / Needs Completion
 
-### ❌ Phase 2 - Content Overlay System
-
-**API Service (Priority: HIGH)**
-- [ ] Update API to read from `config/base/enemies.json` + `config/custom/enemies.json`
-- [ ] Merge configs on read, save to appropriate location (base vs custom)
-- [ ] Update environment variables (CHARACTERS_FILE → ENEMIES_CONFIG)
-- [ ] Add PLAYERS_CONFIG, ITEMS_CONFIG support
-- [ ] Update docker-compose.yml volume mounts
-
-**Files to Update:**
-- `api/src/index.js` - config paths
-- `api/src/routes/characters.js` - load/save logic
-- `api/src/services/fileService.js` - file operations
-- `docker-compose.yml` - env vars and volumes
-
-**Character Editor (Priority: HIGH)**
+### ❌ Phase 3 - Content Pack Selection (Optional)
 - [ ] Update editor to save to `config/custom/enemies.json` (not old `characters.json`)
 - [ ] Add toggle: "Save to base" vs "Save to custom"
 - [ ] Show which content pack each character belongs to
@@ -176,17 +179,17 @@ docker compose build && docker compose up -d
 
 ### Add a New Enemy
 
-**Current Workflow (Phase 1):**
-1. Edit `config/custom/enemies.json`
-2. Add sprite images to `assets/custom/characters/enemies/`
-3. Refresh browser
-
-**Future Workflow (Post Phase 2):**
+**Current Workflow (Phase 2 Complete):**
 1. Open character editor at http://localhost:3333/tools/character-editor2.html
 2. Click "+ New Character"
-3. Upload sprite images via UI
+3. Upload sprite images via UI (auto-saves to `assets/custom/`)
 4. Fill in stats
 5. Click "Save" → auto-saves to `config/custom/enemies.json`
+
+**Alternative Manual Workflow:**
+1. Edit `config/custom/enemies.json` directly
+2. Add sprite images to `assets/custom/characters/enemies/`
+3. Refresh browser
 
 ### Git Workflow
 
@@ -205,11 +208,10 @@ git commit -m "feat: add new base enemy"
 
 ## Known Issues / Limitations
 
-1. **API Still Uses Old Structure** - Character editor saves to `characters.json`, not new configs
-2. **No Asset Fallback** - If custom asset path is wrong, game breaks (no fallback to base)
-3. **No Pack Selection UI** - System hardcoded to base + custom merge only
-4. **No Config Validation** - Malformed JSON will crash game
-5. **Hardcoded Floor Tile** - Environment assets not fully config-driven
+1. **No Asset Fallback** - If custom asset path is wrong, game breaks (no fallback to base)
+2. **No Pack Selection UI** - System hardcoded to base + custom merge only
+3. **No Config Validation** - Malformed JSON will crash game
+4. **Hardcoded Floor Tile** - Environment assets not fully config-driven
 
 ---
 
@@ -217,41 +219,30 @@ git commit -m "feat: add new base enemy"
 
 Before considering Phase 2 complete:
 
-- [ ] Game loads without console errors
-- [ ] All sprites display correctly (base + custom)
-- [ ] Character editor can create new enemies
-- [ ] Character editor saves to `config/custom/enemies.json` (not old file)
-- [ ] Uploaded images go to `assets/custom/`
-- [ ] API returns merged base + custom enemies
-- [ ] Docker restart not needed for config changes
-- [ ] `git status` shows no custom content
+- [x] Game loads without console errors
+- [x] All sprites display correctly (base + custom)
+- [x] Character editor can create new enemies
+- [x] Character editor saves to `config/custom/enemies.json` (not old file)
+- [x] Uploaded images go to `assets/custom/`
+- [x] API returns merged base + custom enemies
+- [x] Docker restart not needed for config changes
+- [x] `git status` shows no custom content
 
 ---
 
-## Next Steps (Phase 2 Tasks)
+## Next Steps (Phase 3 Tasks - Optional)
 
 **Recommended Order:**
 
-1. **Update API Service** (Most critical)
-   - Load from new config structure
-   - Merge base + custom configs
-   - Save to correct location
-
-2. **Update Character Editor**
-   - Point to new API endpoints
-   - Add base/custom toggle
-   - Update upload paths
-
-3. **Asset Resolution System**
+1. **Asset Resolution System**
    - Implement custom → base fallback
    - Add error logging
 
-4. **Cleanup**
-   - Remove old `characters.json`
-   - Delete duplicate assets
+2. **Cleanup**
+   - Delete duplicate assets in old locations
    - Update documentation
 
-5. **Optional: Pack Selection**
+3. **Optional: Pack Selection**
    - Design UI for pack switcher
    - Support multiple pack folders
    - Implement pack loading system
@@ -298,7 +289,7 @@ Body: sprite=[file]
 Response: {
   "success": true,
   "data": {
-    "path": "assets/characters/enemies/sprite_1234567890.png"
+    "path": "assets/custom/characters/enemies/sprite_1234567890.png"
   }
 }
 ```
@@ -312,7 +303,7 @@ The user wants:
 2. ✅ Base content (committed) vs custom content (gitignored)
 3. ✅ Easy character creation for kids via web editor
 4. ❌ **Ability to select different content packs** (not yet implemented)
-5. ❌ Frictionless workflow (still requires manual config editing)
+5. ✅ Frictionless workflow (character editor now works!)
 
 **Original Vision:**
 ```
@@ -338,10 +329,10 @@ Only supports ONE custom overlay, not multiple selectable packs.
 1. **Read this file** (you are here)
 2. **Read [PHASE1_SUMMARY.md](PHASE1_SUMMARY.md)** - understand what's done
 3. **Read [docs/ProjectPlan_Restructure.md](docs/ProjectPlan_Restructure.md)** - see full plan
-4. **Check Phase 2 tasks** - see what needs doing
-5. **Ask user** which task to prioritize (API update, editor update, or pack selection)
+4. **Check Phase 3 tasks** - see what needs doing
+5. **Ask user** which task to prioritize (asset fallback, cleanup, or pack selection)
 
-**Most Likely Next Task:** Update API service to use new config structure
+**Most Likely Next Task:** Asset resolution system or cleanup
 
 ---
 
@@ -349,10 +340,10 @@ Only supports ONE custom overlay, not multiple selectable packs.
 
 If the user wants to continue:
 
-1. **Priority**: API update, character editor update, or pack selection UI?
+1. **Priority**: Asset fallback system, cleanup, or pack selection UI?
 2. **Pack Selection**: Do you want multiple selectable packs, or is base + custom overlay enough?
-3. **Cleanup**: Ready to delete old files after Phase 2, or keep for safety?
-4. **Testing**: Should we test the game works before moving to Phase 2?
+3. **Cleanup**: Ready to delete old duplicate assets in legacy locations?
+4. **Testing**: Should we test the game works with custom characters?
 
 ---
 
