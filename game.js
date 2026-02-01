@@ -11,6 +11,7 @@ const FACE_RIGHT = 1;
 const WORLD_WIDTH = 3000;
 const WORLD_HEIGHT = 3000;
 const MAX_OBJECTS = 25000;
+const MAX_DRAW_OBJECTS_DEFAULT = 2000;
 const ENEMY_SPAWN_COUNT_PER_WAVE = 50;
 const ENEMY_SPAWN_TIME_BETWEEN_WAVES = 5000; // ms
 
@@ -83,6 +84,7 @@ let characterImages = {}; // Cache for character sprite images
 let gameConfig = null; // Game configuration
 let playerConfig = null; // Player configuration
 let itemConfig = null; // Item configuration
+let DEBUG_MODE = false; // Toggle with 'D' key - shows hitboxes instead of sprites
 
 // Helper Functions
 // ------------------------------------------
@@ -132,7 +134,7 @@ async function loadGameConfig() {
         gameConfig = {
             world: { width: 3000, height: 3000 },
             assets: { basePath: 'assets/base', customPath: 'assets/custom' },
-            gameplay: { maxObjects: 25000, spawnWaveSize: 50 },
+            gameplay: { maxObjects: 25000, spawnWaveSize: 50, maxDrawObjects: MAX_DRAW_OBJECTS_DEFAULT },
             defaultPlayer: 'sean'
         };
     }
@@ -436,16 +438,33 @@ class Player {
         // draw weapons...
         this.items.forEach(item => item.draw());
 
-        // draw the player sprite...
-        const image = this.animation.image();
-        image.width = this.width;
-        image.height = this.height;
-        context.drawImage(
-            image,
-            this.x - (this.width / 2.0),
-            this.y - (this.height / 2.0),
-            this.width, this.height
-        );
+        if (DEBUG_MODE) {
+            // Debug: draw green rectangle for player
+            context.fillStyle = 'rgba(0, 255, 0, 0.6)';
+            context.fillRect(
+                this.x - (this.width / 2.0),
+                this.y - (this.height / 2.0),
+                this.width, this.height
+            );
+            context.strokeStyle = 'lime';
+            context.lineWidth = 2;
+            context.strokeRect(
+                this.x - (this.width / 2.0),
+                this.y - (this.height / 2.0),
+                this.width, this.height
+            );
+        } else {
+            // draw the player sprite...
+            const image = this.animation.image();
+            image.width = this.width;
+            image.height = this.height;
+            context.drawImage(
+                image,
+                this.x - (this.width / 2.0),
+                this.y - (this.height / 2.0),
+                this.width, this.height
+            );
+        }
     }
 
     loadCharacterAnimations() {
@@ -611,25 +630,34 @@ class Enemy {
     }
 
     draw() {
-        const image = this.animation.image();
-        image.width = this.width;
-        image.height = this.height;
-
-        if (this.useSingleSprite && this.direction === FACE_LEFT) {
-            // Flip the image horizontally for left-facing direction
-            context.save();
-            context.scale(-1, 1);
-            context.drawImage(
-                image,
-                -(this.x + this.width), this.y,
-                this.width, this.height
-            );
-            context.restore();
+        if (DEBUG_MODE) {
+            // Debug: draw red rectangle for enemies
+            context.fillStyle = 'rgba(255, 0, 0, 0.6)';
+            context.fillRect(this.x, this.y, this.width, this.height);
+            context.strokeStyle = 'red';
+            context.lineWidth = 2;
+            context.strokeRect(this.x, this.y, this.width, this.height);
         } else {
-            // Normal rendering (no flip or old format with separate sprites)
-            context.drawImage(
-                image, this.x, this.y, this.width, this.height
-            );
+            const image = this.animation.image();
+            image.width = this.width;
+            image.height = this.height;
+
+            if (this.useSingleSprite && this.direction === FACE_LEFT) {
+                // Flip the image horizontally for left-facing direction
+                context.save();
+                context.scale(-1, 1);
+                context.drawImage(
+                    image,
+                    -(this.x + this.width), this.y,
+                    this.width, this.height
+                );
+                context.restore();
+            } else {
+                // Normal rendering (no flip or old format with separate sprites)
+                context.drawImage(
+                    image, this.x, this.y, this.width, this.height
+                );
+            }
         }
     }
 
@@ -690,12 +718,23 @@ class Candy {
     }
 
     draw() {
-        context.drawImage(
-            this.image,
-            this.x,
-            this.y,
-            this.image.width, this.image.height
-        );
+        if (DEBUG_MODE) {
+            // Debug: draw yellow circle for candy (XP pickup)
+            context.fillStyle = 'rgba(255, 255, 0, 0.6)';
+            context.beginPath();
+            context.arc(this.x + this.image.width / 2, this.y + this.image.height / 2, 15, 0, Math.PI * 2);
+            context.fill();
+            context.strokeStyle = 'yellow';
+            context.lineWidth = 2;
+            context.stroke();
+        } else {
+            context.drawImage(
+                this.image,
+                this.x,
+                this.y,
+                this.image.width, this.image.height
+            );
+        }
     }
 
     pickup() {
@@ -734,12 +773,23 @@ class RegularFlower {
     }
 
     draw() {
-        context.drawImage(
-            this.image,
-            this.x,
-            this.y,
-            this.image.width, this.image.height
-        );
+        if (DEBUG_MODE) {
+            // Debug: draw cyan circle for flower (speed boost)
+            context.fillStyle = 'rgba(0, 255, 255, 0.6)';
+            context.beginPath();
+            context.arc(this.x + this.image.width / 2, this.y + this.image.height / 2, 15, 0, Math.PI * 2);
+            context.fill();
+            context.strokeStyle = 'cyan';
+            context.lineWidth = 2;
+            context.stroke();
+        } else {
+            context.drawImage(
+                this.image,
+                this.x,
+                this.y,
+                this.image.width, this.image.height
+            );
+        }
     }
 
     pickup() {
@@ -787,13 +837,26 @@ class ElectrifiedSword {
     }
 
     draw() {
-        const image = this.animation.image();
-        context.drawImage(
-            image,
-            this.x,
-            this.y,
-            this.width, this.height
-        );
+        if (DEBUG_MODE) {
+            // Debug: draw orange diamond for sword pickup
+            context.fillStyle = 'rgba(255, 165, 0, 0.6)';
+            context.save();
+            context.translate(this.x + this.width / 2, this.y + this.height / 2);
+            context.rotate(Math.PI / 4);
+            context.fillRect(-15, -15, 30, 30);
+            context.strokeStyle = 'orange';
+            context.lineWidth = 2;
+            context.strokeRect(-15, -15, 30, 30);
+            context.restore();
+        } else {
+            const image = this.animation.image();
+            context.drawImage(
+                image,
+                this.x,
+                this.y,
+                this.width, this.height
+            );
+        }
     }
 
     pickup() {
@@ -839,12 +902,33 @@ class RadialProjectilePickup {
     }
 
     draw() {
-        context.drawImage(
-            this.image,
-            this.x - this.width / 2,
-            this.y - this.height / 2,
-            this.width, this.height
-        );
+        if (DEBUG_MODE) {
+            // Debug: draw magenta hexagon for radial projectile pickup
+            context.fillStyle = 'rgba(255, 0, 255, 0.6)';
+            context.save();
+            context.translate(this.x, this.y);
+            context.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i;
+                const x = Math.cos(angle) * 20;
+                const y = Math.sin(angle) * 20;
+                if (i === 0) context.moveTo(x, y);
+                else context.lineTo(x, y);
+            }
+            context.closePath();
+            context.fill();
+            context.strokeStyle = 'magenta';
+            context.lineWidth = 2;
+            context.stroke();
+            context.restore();
+        } else {
+            context.drawImage(
+                this.image,
+                this.x - this.width / 2,
+                this.y - this.height / 2,
+                this.width, this.height
+            );
+        }
     }
 
     pickup() {
@@ -974,25 +1058,36 @@ class DiscoPool extends Weapon {
     }
 
     draw() {
-        drawContext(
-            () => {
-                context.fillStyle = this.fillStyle;
-                context.globalAlpha = this.opacity;
-            }, () => {
-                context.beginPath();
-                context.ellipse(this.x, this.y, this.radius, this.radius, 0, 0, 360);
-                context.fill();
-            },
-        );
+        if (DEBUG_MODE) {
+            // Debug: draw purple circle for disco pool attack area
+            context.fillStyle = 'rgba(200, 100, 255, 0.3)';
+            context.strokeStyle = 'purple';
+            context.lineWidth = 2;
+            context.beginPath();
+            context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            context.fill();
+            context.stroke();
+        } else {
+            drawContext(
+                () => {
+                    context.fillStyle = this.fillStyle;
+                    context.globalAlpha = this.opacity;
+                }, () => {
+                    context.beginPath();
+                    context.ellipse(this.x, this.y, this.radius, this.radius, 0, 0, 360);
+                    context.fill();
+                },
+            );
 
-        // draw the enemy sprite...
-        const image = this.animation.image();
-        context.drawImage(
-            image,
-            this.x - (image.width / 3.2),
-            this.y - 140,
-            image.width / 2.0, image.height / 2.0
-        );
+            // draw the enemy sprite...
+            const image = this.animation.image();
+            context.drawImage(
+                image,
+                this.x - (image.width / 3.2),
+                this.y - 140,
+                image.width / 2.0, image.height / 2.0
+            );
+        }
     }
 }
 
@@ -1065,21 +1160,36 @@ class MicWeapon extends Weapon {
     }
 
     draw() {
-        context.save();
-        context.translate(10, 0);
-        context.setTransform(-1, 0, 0, -1, this.x, this.y);
-        context.rotate(-this.angle);
-        context.drawImage(
-            this.image,
-            -this.image.width / 2, -this.image.height / 2
-        );
-        context.restore();
+        if (DEBUG_MODE) {
+            // Debug: draw white square for mic and line to player
+            context.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            context.fillRect(this.x - 15, this.y - 15, 30, 30);
+            context.strokeStyle = 'white';
+            context.lineWidth = 2;
+            context.strokeRect(this.x - 15, this.y - 15, 30, 30);
+            // Line to player
+            context.beginPath();
+            context.moveTo(player.x, player.y);
+            context.lineTo(this.x, this.y);
+            context.closePath();
+            context.stroke();
+        } else {
+            context.save();
+            context.translate(10, 0);
+            context.setTransform(-1, 0, 0, -1, this.x, this.y);
+            context.rotate(-this.angle);
+            context.drawImage(
+                this.image,
+                -this.image.width / 2, -this.image.height / 2
+            );
+            context.restore();
 
-        context.beginPath();
-        context.moveTo(player.x, player.y);
-        context.lineTo(this.x, this.y);
-        context.closePath();
-        context.stroke();
+            context.beginPath();
+            context.moveTo(player.x, player.y);
+            context.lineTo(this.x, this.y);
+            context.closePath();
+            context.stroke();
+        }
     }
 }
 
@@ -1132,16 +1242,35 @@ class ElectrifiedSwordWeapon extends Weapon {
     }
 
     draw() {
-        const image = this.animation.image();
-        context.save();
-        context.translate(this.x, this.y);
-        context.rotate(this.angle + Math.PI / 2);
-        context.drawImage(
-            image,
-            -this.width / 2, -this.height / 2,
-            this.width, this.height
-        );
-        context.restore();
+        if (DEBUG_MODE) {
+            // Debug: draw rotated orange rectangle for sword
+            context.save();
+            context.translate(this.x, this.y);
+            context.rotate(this.angle + Math.PI / 2);
+            context.fillStyle = 'rgba(255, 140, 0, 0.7)';
+            context.fillRect(
+                -this.width / 2, -this.height / 2,
+                this.width, this.height
+            );
+            context.strokeStyle = 'darkorange';
+            context.lineWidth = 2;
+            context.strokeRect(
+                -this.width / 2, -this.height / 2,
+                this.width, this.height
+            );
+            context.restore();
+        } else {
+            const image = this.animation.image();
+            context.save();
+            context.translate(this.x, this.y);
+            context.rotate(this.angle + Math.PI / 2);
+            context.drawImage(
+                image,
+                -this.width / 2, -this.height / 2,
+                this.width, this.height
+            );
+            context.restore();
+        }
     }
 }
 
@@ -1203,15 +1332,26 @@ class RadialProjectile {
     }
 
     draw() {
-        context.save();
-        context.translate(this.x, this.y);
-        context.rotate(this.rotation);
-        context.drawImage(
-            this.image,
-            -this.width / 2, -this.height / 2,
-            this.width, this.height
-        );
-        context.restore();
+        if (DEBUG_MODE) {
+            // Debug: draw small blue circle for projectile
+            context.fillStyle = 'rgba(100, 150, 255, 0.8)';
+            context.beginPath();
+            context.arc(this.x, this.y, 8, 0, Math.PI * 2);
+            context.fill();
+            context.strokeStyle = 'blue';
+            context.lineWidth = 1;
+            context.stroke();
+        } else {
+            context.save();
+            context.translate(this.x, this.y);
+            context.rotate(this.rotation);
+            context.drawImage(
+                this.image,
+                -this.width / 2, -this.height / 2,
+                this.width, this.height
+            );
+            context.restore();
+        }
     }
 }
 
@@ -1296,7 +1436,37 @@ function playGame() {
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     // draw world objects
-    for (const object of objects) {
+    const maxDrawObjects = (
+        gameConfig &&
+        gameConfig.gameplay &&
+        Number.isFinite(gameConfig.gameplay.maxDrawObjects)
+    )
+        ? gameConfig.gameplay.maxDrawObjects
+        : MAX_DRAW_OBJECTS_DEFAULT;
+
+    let drawableObjects = objects.filter(object => object && !object.destroyed);
+    const playerIndex = drawableObjects.indexOf(player);
+    const playerObject = playerIndex >= 0 ? drawableObjects[playerIndex] : null;
+
+    if (maxDrawObjects > 0 && drawableObjects.length > maxDrawObjects) {
+        if (playerObject) {
+            drawableObjects.splice(playerIndex, 1);
+        }
+
+        drawableObjects.sort((a, b) => {
+            return distanceSquared(a.x, a.y, player.x, player.y) -
+                distanceSquared(b.x, b.y, player.x, player.y);
+        });
+
+        const limit = Math.max(0, maxDrawObjects - (playerObject ? 1 : 0));
+        drawableObjects = drawableObjects.slice(0, limit);
+
+        if (playerObject) {
+            drawableObjects.unshift(playerObject);
+        }
+    }
+
+    for (const object of drawableObjects) {
         object?.draw();
     }
 
@@ -1443,6 +1613,12 @@ function measureTextDimensions(text) {
     };
 }
 
+function distanceSquared(ax, ay, bx, by) {
+    const dx = ax - bx;
+    const dy = ay - by;
+    return (dx * dx) + (dy * dy);
+}
+
 function makeImage(src) {
     const image = new Image();
     image.src = src;
@@ -1548,6 +1724,9 @@ window.addEventListener('keydown', (e) => {
         player.switchCharacter('sean');
     } else if (e.keyCode === 50) { // Key "2" - Switch to MicrowaveMan
         player.switchCharacter('microwaveMan');
+    } else if (e.keyCode === 68) { // Key "D" - Toggle debug mode
+        DEBUG_MODE = !DEBUG_MODE;
+        console.log('Debug mode:', DEBUG_MODE ? 'ON' : 'OFF');
     }
 });
 

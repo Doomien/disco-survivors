@@ -12,6 +12,7 @@
   },
   "gameplay": {
     "maxObjects": 25000,
+    "maxDrawObjects": 2000,
     "spawnWaveSize": 50,
     "targetFps": 60
   },
