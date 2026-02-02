@@ -176,11 +176,16 @@ const collectibleDataSchema = Joi.object({
 
   sprite: Joi.string()
     .pattern(/\.(png|jpg|jpeg|gif)$/i)
-    .required()
     .messages({
-      'string.pattern.base': 'Sprite path must end with .png, .jpg, .jpeg, or .gif',
-      'any.required': 'Sprite is required'
+      'string.pattern.base': 'Sprite path must end with .png, .jpg, .jpeg, or .gif'
     }),
+
+  sprites: Joi.array()
+    .items(Joi.string().pattern(/\.(png|jpg|jpeg|gif)$/i).messages({
+      'string.pattern.base': 'Sprite paths must end with .png, .jpg, .jpeg, or .gif'
+    }))
+    .min(1)
+    .max(20),
 
   droppedSprite: Joi.string()
     .pattern(/\.(png|jpg|jpeg|gif)$/i)
@@ -204,7 +209,48 @@ const collectibleDataSchema = Joi.object({
     .integer()
     .min(0)
     .max(10000)
-    .default(1)
+    .default(1),
+
+  dropWeight: Joi.number()
+    .integer()
+    .min(0)
+    .max(1000)
+    .default(0),
+
+  effect: Joi.string()
+    .valid('speedBoost', 'heal')
+    .allow(null, ''),
+
+  healAmount: Joi.number()
+    .integer()
+    .min(1)
+    .max(1000),
+
+  grantsWeapon: Joi.string()
+    .pattern(/^[a-zA-Z0-9_]+$/),
+
+  size: Joi.object({
+    width: Joi.number()
+      .integer()
+      .min(1)
+      .max(500),
+    height: Joi.number()
+      .integer()
+      .min(1)
+      .max(500)
+  })
+}).custom((value, helpers) => {
+  if (!value.sprite && (!value.sprites || value.sprites.length === 0)) {
+    return helpers.error('any.custom', { message: 'Collectible requires sprite or sprites' });
+  }
+
+  if (value.effect === 'heal' && !(value.healAmount > 0)) {
+    return helpers.error('any.custom', { message: 'healAmount must be > 0 when effect is heal' });
+  }
+
+  return value;
+}).messages({
+  'any.custom': '{{#message}}'
 });
 
 // Reserved IDs that cannot be used

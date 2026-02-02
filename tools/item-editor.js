@@ -302,7 +302,13 @@ function renderWeaponForm(content, itemId, weapon, isBase) {
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Sprite Path</label>
-                        <input type="text" id="itemSprite" value="${escapeHtml(weapon.sprite || '')}" placeholder="assets/custom/items/weapon.png">
+                        <div class="sprite-input-group">
+                            <input type="text" id="itemSprite" value="${escapeHtml(weapon.sprite || '')}" placeholder="assets/custom/items/weapon.png" oninput="updateSingleSpritePreview('itemSpritePreview', this.value)">
+                            <div class="sprite-preview ${weapon.sprite ? 'has-image' : ''}" id="itemSpritePreview">
+                                <img src="${escapeHtml(weapon.sprite || '')}" alt="Sprite preview">
+                                <div class="sprite-placeholder">No preview</div>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Radius</label>
@@ -426,11 +432,23 @@ function renderCollectibleForm(content, itemId, collectible, isBase) {
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Sprite Path *</label>
-                        <input type="text" id="itemSprite" value="${escapeHtml(collectible.sprite || '')}" required placeholder="assets/custom/items/collectible.png">
+                        <div class="sprite-input-group">
+                            <input type="text" id="itemSprite" value="${escapeHtml(collectible.sprite || '')}" required placeholder="assets/custom/items/collectible.png" oninput="updateSingleSpritePreview('itemCollectibleSpritePreview', this.value)">
+                            <div class="sprite-preview ${collectible.sprite ? 'has-image' : ''}" id="itemCollectibleSpritePreview">
+                                <img src="${escapeHtml(collectible.sprite || '')}" alt="Sprite preview">
+                                <div class="sprite-placeholder">No preview</div>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Dropped Sprite Path</label>
-                        <input type="text" id="itemDroppedSprite" value="${escapeHtml(collectible.droppedSprite || '')}" placeholder="assets/custom/items/collectible-dropped.png">
+                        <div class="sprite-input-group">
+                            <input type="text" id="itemDroppedSprite" value="${escapeHtml(collectible.droppedSprite || '')}" placeholder="assets/custom/items/collectible-dropped.png" oninput="updateSingleSpritePreview('itemCollectibleDroppedSpritePreview', this.value)">
+                            <div class="sprite-preview ${collectible.droppedSprite ? 'has-image' : ''}" id="itemCollectibleDroppedSpritePreview">
+                                <img src="${escapeHtml(collectible.droppedSprite || '')}" alt="Dropped sprite preview">
+                                <div class="sprite-placeholder">No preview</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -452,6 +470,29 @@ function renderCollectibleForm(content, itemId, collectible, isBase) {
                         <label>XP Value</label>
                         <input type="number" id="itemXpValue" value="${collectible.xpValue || 1}" min="0" max="10000">
                     </div>
+                    <div class="form-group">
+                        <label>Effect</label>
+                        <select id="itemEffect">
+                            <option value="" ${!collectible.effect ? 'selected' : ''}>None</option>
+                            <option value="speedBoost" ${collectible.effect === 'speedBoost' ? 'selected' : ''}>Speed Boost</option>
+                            <option value="heal" ${collectible.effect === 'heal' ? 'selected' : ''}>Heal</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Heal Amount</label>
+                        <input type="number" id="itemHealAmount" value="${collectible.healAmount || ''}" min="1" max="1000" placeholder="10">
+                        <div class="helper-text">Used when Effect = Heal</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Drop Weight</label>
+                        <input type="number" id="itemDropWeight" value="${collectible.dropWeight ?? 0}" min="0" max="1000">
+                        <div class="helper-text">Higher = more common (0 disables drops)</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Grants Weapon</label>
+                        <input type="text" id="itemGrantsWeapon" value="${escapeHtml(collectible.grantsWeapon || '')}" placeholder="e.g., electrifiedSwordWeapon">
+                        <div class="helper-text">Adds a weapon to the player on pickup</div>
+                    </div>
                 </div>
             </div>
         </form>
@@ -465,10 +506,15 @@ function renderItemSpriteInputs() {
     container.innerHTML = itemSpriteInputs.map((sprite, index) => `
         <div class="sprite-input-group">
             <input type="text"
+                   id="itemSpriteInput${index}"
                    value="${escapeHtml(sprite)}"
-                   onchange="updateItemSpriteInput(${index}, this.value)"
+                   oninput="updateItemSpriteInput(${index}, this.value); updateSingleSpritePreview('itemSpritePreview${index}', this.value)"
                    placeholder="assets/custom/items/projectile-${index + 1}.png"
                    maxlength="200">
+            <div class="sprite-preview ${sprite ? 'has-image' : ''}" id="itemSpritePreview${index}">
+                <img src="${escapeHtml(sprite)}" alt="Sprite preview ${index + 1}">
+                <div class="sprite-placeholder">No preview</div>
+            </div>
             ${itemSpriteInputs.length > 1 ? `<button type="button" class="btn btn-danger btn-small" onclick="removeItemSpriteInput(${index})">×</button>` : ''}
         </div>
     `).join('');
@@ -490,6 +536,21 @@ function removeItemSpriteInput(index) {
 
 function updateItemSpriteInput(index, value) {
     itemSpriteInputs[index] = value;
+}
+
+function updateSingleSpritePreview(previewId, value) {
+    const container = document.getElementById(previewId);
+    if (!container) return;
+
+    const img = container.querySelector('img');
+    const trimmedValue = value ? value.trim() : '';
+    if (trimmedValue) {
+        img.src = trimmedValue;
+        container.classList.add('has-image');
+    } else {
+        img.removeAttribute('src');
+        container.classList.remove('has-image');
+    }
 }
 
 // ======================
@@ -560,6 +621,18 @@ function gatherItemFormData() {
             
             const droppedSprite = getName('itemDroppedSprite')?.value?.trim();
             if (droppedSprite) data.droppedSprite = droppedSprite;
+
+            const effect = getName('itemEffect')?.value?.trim();
+            if (effect) data.effect = effect;
+
+            const healAmount = getName('itemHealAmount')?.value;
+            if (healAmount) data.healAmount = parseInt(healAmount) || 0;
+
+            const dropWeight = getName('itemDropWeight')?.value;
+            if (dropWeight !== undefined && dropWeight !== '') data.dropWeight = parseInt(dropWeight) || 0;
+
+            const grantsWeapon = getName('itemGrantsWeapon')?.value?.trim();
+            if (grantsWeapon) data.grantsWeapon = grantsWeapon;
             break;
     }
     
@@ -656,7 +729,8 @@ function createNewItem() {
                 sprite: 'assets/custom/items/collectible.png',
                 attractRadius: 200,
                 pickupRadius: 50,
-                xpValue: 1
+                xpValue: 1,
+                dropWeight: 0
             };
             break;
     }

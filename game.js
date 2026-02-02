@@ -25,12 +25,12 @@ const GAME_CONFIG = {
 };
 
 // Drop table configuration - weights determine relative drop chance
-// Higher weight = more common drop
-const DROP_TABLE = [
+// Higher weight = more common drop (fallback if config not loaded)
+const DEFAULT_DROP_TABLE = [
     { type: 'candy', weight: 80 },           // XP drop - most common
     { type: 'regularFlower', weight: 10 },   // Speed boost
     { type: 'electrifiedSword', weight: 5 }, // Sword weapon pickup
-    { type: 'radialProjectile', weight: 5 }  // Radial projectile weapon pickup
+    { type: 'radialProjectilePickup', weight: 5 }  // Radial projectile weapon pickup
 ];
 
 // Player character images
@@ -85,6 +85,7 @@ let gameConfig = null; // Game configuration
 let playerConfig = null; // Player configuration
 let itemConfig = null; // Item configuration
 let DEBUG_MODE = false; // Toggle with 'D' key - shows hitboxes instead of sprites
+let dropTable = null; // Built from item config collectibles
 
 // Helper Functions
 // ------------------------------------------
@@ -231,9 +232,11 @@ async function loadItemConfig() {
         };
 
         console.log('Item config loaded:', itemConfig);
+        buildDropTableFromConfig();
     } catch (error) {
         console.error('Failed to load item config:', error);
         itemConfig = { weapons: {}, projectiles: {}, collectibles: {} };
+        dropTable = DEFAULT_DROP_TABLE;
     }
 }
 
@@ -267,10 +270,11 @@ function getRandomEnemyType() {
  * Returns the type string (e.g., 'candy', 'electrifiedSword')
  */
 function getRandomDropType() {
-    const totalWeight = DROP_TABLE.reduce((sum, item) => sum + item.weight, 0);
+    const activeDropTable = dropTable && dropTable.length ? dropTable : DEFAULT_DROP_TABLE;
+    const totalWeight = activeDropTable.reduce((sum, item) => sum + item.weight, 0);
     
     let random = Math.random() * totalWeight;
-    for (const drop of DROP_TABLE) {
+    for (const drop of activeDropTable) {
         random -= drop.weight;
         if (random <= 0) {
             return drop.type;
@@ -285,6 +289,12 @@ function getRandomDropType() {
  * Spawn a drop item at the given position based on type
  */
 function spawnDrop(x, y, type) {
+    const collectible = itemConfig?.collectibles?.[type];
+    if (collectible) {
+        objects.push(new Collectible(x, y, type, collectible));
+        return;
+    }
+
     switch (type) {
         case 'candy':
             objects.push(new Candy(x, y));
@@ -298,9 +308,21 @@ function spawnDrop(x, y, type) {
         case 'radialProjectile':
             objects.push(new RadialProjectilePickup(x, y));
             break;
+        case 'radialProjectilePickup':
+            objects.push(new RadialProjectilePickup(x, y));
+            break;
         default:
             objects.push(new Candy(x, y));
     }
+}
+
+function buildDropTableFromConfig() {
+    const collectibles = itemConfig?.collectibles || {};
+    const entries = Object.entries(collectibles)
+        .map(([type, data]) => ({ type, weight: Number(data.dropWeight) || 0 }))
+        .filter(entry => entry.weight > 0);
+
+    dropTable = entries.length ? entries : DEFAULT_DROP_TABLE;
 }
 
 /**
@@ -387,6 +409,7 @@ class Player {
         this.level = 1;
         this.width = this.characters[this.currentCharacter].width;
         this.height = this.characters[this.currentCharacter].height;
+        this.maxHealth = 50;
         this.health = 50;
         this.baseSpeed = 3;
         this.speed = 3;
@@ -936,6 +959,127 @@ class RadialProjectilePickup {
         this.destroy();
         // Add the Radial Projectile weapon to the player
         player.items.push(new RadialProjectileWeapon());
+    }
+
+    destroy() {
+        if (this.destroyed) return;
+        this.destroyed = true;
+    }
+}
+
+function createWeaponFromId(id) {
+    switch (id) {
+        case 'micWeapon':
+            return new MicWeapon();
+        case 'discoBallWeapon':
+            return new DiscoBallWeapon();
+        case 'radialProjectileWeapon':
+            return new RadialProjectileWeapon();
+        case 'electrifiedSwordWeapon':
+            return new ElectrifiedSwordWeapon();
+        default:
+            return null;
+    }
+}
+
+class Collectible {
+    constructor(x, y, type, data) {
+        this.type = type;
+        this.data = data || {};
+        this.x = x;
+        this.y = y;
+
+        this.attractRadius = Number(this.data.attractRadius) || 200;
+        this.pickupRadius = Number(this.data.pickupRadius) || 50;
+        this.xpValue = Number(this.data.xpValue) || 0;
+        this.effect = this.data.effect || null;
+        this.healAmount = Number(this.data.healAmount) || 0;
+        this.grantsWeapon = this.data.grantsWeapon || null;
+
+        if (Array.isArray(this.data.sprites) && this.data.sprites.length) {
+            this.animation = new Animation(
+                this.data.sprites.map(src => ({ time: 10, image: makeImage(src) }))
+            );
+            this.width = this.data.size?.width || 40;
+            this.height = this.data.size?.height || 40;
+        } else {
+            const spritePath = this.data.droppedSprite || this.data.sprite;
+            this.image = spritePath ? makeImage(spritePath) : null;
+            this.width = this.data.size?.width || 40;
+            this.height = this.data.size?.height || 40;
+            if (this.image && !this.data.size) {
+                this.image.onload = () => {
+                    this.width = this.image.naturalWidth || this.image.width || this.width;
+                    this.height = this.image.naturalHeight || this.image.height || this.height;
+                };
+            }
+        }
+    }
+
+    update() {
+        if (this.destroyed) return;
+
+        if (pointInCircle(this.x, this.y, player.x, player.y, this.pickupRadius)) {
+            this.pickup();
+            return;
+        }
+
+        if (pointInCircle(this.x, this.y, player.x, player.y, this.attractRadius)) {
+            this.x = lerp(this.x, player.x, 0.1);
+            this.y = lerp(this.y, player.y, 0.1);
+        }
+
+        if (this.animation) {
+            this.animation.update(false);
+        }
+    }
+
+    draw() {
+        if (DEBUG_MODE) {
+            context.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            context.beginPath();
+            context.arc(this.x + (this.width / 2), this.y + (this.height / 2), 15, 0, Math.PI * 2);
+            context.fill();
+            context.strokeStyle = 'white';
+            context.lineWidth = 2;
+            context.stroke();
+            return;
+        }
+
+        if (this.animation) {
+            const image = this.animation.image();
+            context.drawImage(image, this.x, this.y, this.width, this.height);
+            return;
+        }
+
+        if (this.image) {
+            if (this.image.complete && (this.image.naturalWidth || this.image.width)) {
+                context.drawImage(this.image, this.x, this.y, this.width, this.height);
+            }
+        }
+    }
+
+    pickup() {
+        if (this.destroyed) return;
+        this.destroy();
+
+        if (this.xpValue > 0) {
+            player.gainXp(this.xpValue);
+        }
+
+        if (this.effect === 'speedBoost') {
+            player.activateSpeedBoost();
+        } else if (this.effect === 'heal' && this.healAmount > 0) {
+            const maxHealth = Number(player.maxHealth) || player.health;
+            player.health = Math.min(player.health + this.healAmount, maxHealth);
+        }
+
+        if (this.grantsWeapon) {
+            const weapon = createWeaponFromId(this.grantsWeapon);
+            if (weapon) {
+                player.items.push(weapon);
+            }
+        }
     }
 
     destroy() {
